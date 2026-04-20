@@ -1,132 +1,465 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rubrik Security Cloud Capacity Planning Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubrik Cluster Sizing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #ffffff; --bg-secondary: #f5f5f3; --bg-tertiary: #eeede9;
+    --text-primary: #1a1a1a; --text-secondary: #6b6b68;
+    --border-light: rgba(0,0,0,0.1); --border-medium: rgba(0,0,0,0.18);
+    --color-success-bg: #EAF3DE; --color-success-text: #3B6D11;
+    --color-warn-bg: #FAEEDA; --color-warn-text: #854F0B;
+    --color-danger-bg: #FCEBEB; --color-danger-text: #A32D2D;
+    --color-info-bg: #E6F1FB; --color-info-text: #185FA5;
+    --radius-md: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c; --bg-secondary: #272725; --bg-tertiary: #2f2f2d;
+      --text-primary: #f0efea; --text-secondary: #9e9e98;
+      --border-light: rgba(255,255,255,0.1); --border-medium: rgba(255,255,255,0.18);
+      --color-success-bg: #173404; --color-success-text: #C0DD97;
+      --color-warn-bg: #412402; --color-warn-text: #FAC775;
+      --color-danger-bg: #501313; --color-danger-text: #F7C1C1;
+      --color-info-bg: #042C53; --color-info-text: #85B7EB;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; }
+  .header { background: var(--bg-primary); border-bottom: 0.5px solid var(--border-light); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .header-title { font-size: 18px; font-weight: 500; }
+  .header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .rubrik-badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; background: #00B4A2; color: white; letter-spacing: 0.3px; }
+  .main { max-width: 1300px; margin: 0 auto; padding: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 0.5px solid var(--border-light); }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+  .controls-bar { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 1.25rem; }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .toggle { display: flex; border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); overflow: hidden; }
+  .toggle button { padding: 6px 14px; font-size: 12px; background: transparent; border: none; cursor: pointer; color: var(--text-secondary); transition: background 0.15s, color 0.15s; white-space: nowrap; }
+  .toggle button.active { background: var(--color-info-bg); color: var(--color-info-text); font-weight: 500; }
+  .switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--border-medium); border-radius: 22px; cursor: pointer; transition: background 0.2s; }
+  .slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  input:checked + .slider { background: #378ADD; }
+  input:checked + .slider:before { transform: translateX(16px); }
+  .year-select select { font-size: 12px; padding: 6px 10px; background: var(--bg-primary); border: 0.5px solid var(--border-medium); border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; }
+  .divider { width: 0.5px; height: 28px; background: var(--border-light); }
 
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
+  .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .summary-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 0.75rem 1rem; }
+  .summary-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .summary-value { font-size: 20px; font-weight: 500; }
+  .summary-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
 
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+  .clusters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+  .cluster-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .cluster-card.prod { border-top: 2.5px solid #378ADD; }
+  .cluster-card.nonprod { border-top: 2.5px solid #EF9F27; }
+  .cluster-name { font-size: 14px; font-weight: 500; }
+  .cluster-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; margin-bottom: 12px; }
+  .cluster-total { font-size: 26px; font-weight: 500; line-height: 1.1; }
+  .cluster-unit { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .breakdown { margin-top: 10px; border-top: 0.5px solid var(--border-light); padding-top: 8px; }
+  .breakdown-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); padding: 2px 0; }
+  .breakdown-row .val { color: var(--text-primary); font-weight: 500; }
+  .breakdown-row.repl-row { color: #185FA5; }
+  .breakdown-row.repl-row .val { color: #185FA5; }
+  @media (prefers-color-scheme: dark) { .breakdown-row.repl-row, .breakdown-row.repl-row .val { color: #85B7EB; } }
+  .repl-badge { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 20px; background: var(--color-success-bg); color: var(--color-success-text); margin-top: 8px; font-weight: 500; }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0.5rem; }
+  @media (max-width: 800px) { .bottom-grid { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .chart-card.wide { grid-column: 1 / -1; }
+  .card-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
+  /* License */
+  .license-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+  @media (max-width: 800px) { .license-grid { grid-template-columns: 1fr; } }
+  .license-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .license-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .license-edition { font-size: 11px; color: var(--text-secondary); margin-bottom: 14px; }
+  .license-bar-wrap { background: var(--bg-secondary); border-radius: 6px; height: 10px; margin: 6px 0 4px; overflow: hidden; }
+  .license-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s; }
+  .license-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+  .license-row .lbl { color: var(--text-secondary); }
+  .license-row .val { font-weight: 500; }
+  .status-pill { display: inline-block; font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: 500; margin-top: 10px; }
+  .pill-ok   { background: var(--color-success-bg); color: var(--color-success-text); }
+  .pill-warn { background: var(--color-warn-bg);    color: var(--color-warn-text); }
+  .pill-over { background: var(--color-danger-bg);  color: var(--color-danger-text); }
 
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px;
-        }
+  .table-wrap { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.25rem; overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { text-align: right; font-weight: 500; color: var(--text-secondary); font-size: 11px; padding: 6px 10px; border-bottom: 0.5px solid var(--border-light); white-space: nowrap; }
+  .data-table th:first-child { text-align: left; }
+  .data-table td { padding: 7px 10px; border-bottom: 0.5px solid var(--border-light); text-align: right; white-space: nowrap; }
+  .data-table td:first-child { text-align: left; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table td.over { color: var(--color-danger-text); font-weight: 500; }
+  .data-table td.warn { color: var(--color-warn-text); font-weight: 500; }
+  .data-table td.ok   { color: var(--color-success-text); }
+  .data-table td.zero { color: var(--color-success-text); }
+  .data-table td.some { color: var(--color-warn-text); font-weight: 500; }
+  .data-table td.many { color: var(--color-danger-text); font-weight: 500; }
+  .data-table tr.spacer td { padding: 3px; border: none; }
 
-        .input-section, .results-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-        }
+  /* Cluster capacity cards */
+  .cap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+  .cap-card { background: var(--bg-primary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .cap-card.prod { border-top: 2.5px solid #378ADD; }
+  .cap-card.nonprod { border-top: 2.5px solid #EF9F27; }
+  .cap-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .cap-exist { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+  .nodes-big { font-size: 28px; font-weight: 500; margin-top: 10px; line-height: 1; }
+  .nodes-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .nodes-detail { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 
-        .section-title {
-            font-size: 1.5em;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-        }
+  .assumptions { background: var(--bg-secondary); border: 0.5px solid var(--border-light); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+  .assumptions-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .assumptions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px; }
+  .assumption-item { font-size: 11px; color: var(--text-secondary); }
+  .assumption-item strong { color: var(--text-primary); font-weight: 500; }
+  .footer { text-align: center; font-size: 11px; color: var(--text-secondary); padding: 1.5rem; border-top: 0.5px solid var(--border-light); margin-top: 1rem; }
+</style>
+</head>
+<body>
 
-        .workload-group {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #3498db;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+<div class="header">
+  <div>
+    <div class="header-title">Rubrik Cluster Sizing Dashboard</div>
+    <div class="header-sub">Data protection capacity planning · All values in TB unless noted</div>
+  </div>
+  <span class="rubrik-badge">RUBRIK</span>
+</div>
 
-        .workload-title {
-            font-size: 1.2em;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
+<div class="main">
 
-        .input-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+  <div class="controls-bar">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Scenario</span>
+      <div class="toggle">
+        <button class="active" id="s1btn" onclick="setScenario(1)">Full overlap</button>
+        <button id="s2btn" onclick="setScenario(2)">DB deduped from VMs</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Replication</span>
+      <label class="switch"><input type="checkbox" id="replToggle" onchange="render()"><span class="slider"></span></label>
+      <span class="ctrl-label" id="replLabel">Off</span>
+    </div>
+    <div class="divider"></div>
+    <div class="ctrl-group year-select">
+      <span class="ctrl-label">Year</span>
+      <select id="yearSel" onchange="render()">
+        <option value="0">Year 1 (current)</option>
+        <option value="1">Year 2 (+15%)</option>
+        <option value="2">Year 3 (+32%)</option>
+        <option value="3">Year 4 (+52%)</option>
+        <option value="4">Year 5 (+75%)</option>
+      </select>
+    </div>
+  </div>
 
-        .input-field {
-            display: flex;
-            flex-direction: column;
-        }
+  <div class="section-label" style="border-top:none;margin-top:0;padding-top:0;">Storage requirement — selected year</div>
+  <div class="summary-bar" id="summaryBar"></div>
+  <div class="clusters-grid" id="clusterCards"></div>
 
-        label {
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
+  <div class="bottom-grid">
+    <div class="chart-card wide">
+      <div class="card-title">5-year storage growth per cluster (TB)</div>
+      <div class="legend" id="growthLegend"></div>
+      <div style="position:relative;width:100%;height:300px;"><canvas id="growthChart" role="img" aria-label="5-year storage growth per cluster"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Workload composition — selected year (TB)</div>
+      <div class="legend" id="workloadLegend"></div>
+      <div style="position:relative;width:100%;height:300px;"><canvas id="workloadChart" role="img" aria-label="Workload composition per cluster"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title">Local vs replicated storage — selected year (TB)</div>
+      <div class="legend" id="replLegend"></div>
+      <div style="position:relative;width:100%;height:300px;"><canvas id="replChart" role="img" aria-label="Local vs replicated storage"></canvas></div>
+    </div>
+  </div>
 
-        input[type="number"], input[type="range"] {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
+  <div class="section-label">License consumption — selected year</div>
+  <div class="license-grid" id="licenseCards"></div>
 
-        input[type="number"]:focus {
-            border-color: #3498db;
-            outline: none;
-        }
+  <div class="table-wrap">
+    <div class="card-title">License consumption — 5-year projection</div>
+    <table class="data-table"><thead><tr id="licHead"></tr></thead><tbody id="licBody"></tbody></table>
+  </div>
 
-        input[type="range"] {
-            padding: 5px 0;
-        }
+  <div class="section-label">Cluster physical capacity vs requirement — selected year</div>
+  <div class="cap-grid" id="capCards"></div>
 
-        .range-display {
-            text-align: center;
-            font-weight: bold;
-            color: #3498db;
-            margin-top: 5px;
-            font-size: 0.9em;
-        }
+  <div class="table-wrap">
+    <div class="card-title">Additional Dell R760 nodes required (180 TB usable each) — 5-year projection</div>
+    <table class="data-table"><thead><tr id="nodeHead"></tr></thead><tbody id="nodeBody"></tbody></table>
+  </div>
 
-        .results-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin
+  <div class="assumptions">
+    <div class="assumptions-title">Sizing assumptions</div>
+    <div class="assumptions-grid">
+      <div class="assumption-item"><strong>Production retention:</strong> 35 days (ATL PCI, SAT PCI, ATL Prod, SAT Prod)</div>
+      <div class="assumption-item"><strong>Non-prod retention:</strong> 14 days (ATL Test, SAT Test)</div>
+      <div class="assumption-item"><strong>VM data reduction:</strong> 2.8:1</div>
+      <div class="assumption-item"><strong>Oracle / SQL / UDB data reduction:</strong> 3:1</div>
+      <div class="assumption-item"><strong>NAS / No-SQL data reduction:</strong> 1.3:1</div>
+      <div class="assumption-item"><strong>VM daily change rate:</strong> 2%</div>
+      <div class="assumption-item"><strong>Oracle / SQL / UDB / No-SQL change rate:</strong> 5%</div>
+      <div class="assumption-item"><strong>NAS daily change rate:</strong> 0.1%</div>
+      <div class="assumption-item"><strong>Transaction logs:</strong> 5% of dataset/day × retention, stored unreduced</div>
+      <div class="assumption-item"><strong>Annual growth:</strong> 15% compounding</div>
+      <div class="assumption-item"><strong>Enterprise license:</strong> 24 PB — covers local source data protection</div>
+      <div class="assumption-item"><strong>Foundation license:</strong> 37 PB — covers replicated copy storage</div>
+      <div class="assumption-item"><strong>Expansion node:</strong> Dell R760, 180 TB usable per node</div>
+      <div class="assumption-item"><strong>Replication pairs:</strong> ATL Test ↔ SAT Test · ATL PCI ↔ SAT PCI · ATL Prod ↔ SAT Prod</div>
+      <div class="assumption-item"><strong>Scenario 1:</strong> All workloads protected independently (VMs + DBs double-counted)</div>
+      <div class="assumption-item"><strong>Scenario 2:</strong> SQL + UDB + No-SQL subtracted from VM footprint per cluster</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Rubrik Sizing Dashboard · Source data in GB · Displayed in TB · 15% annual growth · Dell R760 @ 180 TB usable</div>
+
+<script>
+const RAW = {
+  'ATL Test': { NAS:59392,   VMs:546816,  Oracle:47246,  SQL:4954,   UDB:9193,   NoSQL:0,     prod:false },
+  'SAT Test': { NAS:65536,   VMs:965632,  Oracle:390917, SQL:39485,  UDB:21792,  NoSQL:4978,  prod:false },
+  'ATL PCI':  { NAS:195584,  VMs:533504,  Oracle:1359,   SQL:0,      UDB:12108,  NoSQL:0,     prod:true  },
+  'SAT PCI':  { NAS:200704,  VMs:489472,  Oracle:24179,  SQL:0,      UDB:12283,  NoSQL:0,     prod:true  },
+  'ATL Prod': { NAS:4823040, VMs:2248704, Oracle:128993, SQL:24453,  UDB:143600, NoSQL:0,     prod:true  },
+  'SAT Prod': { NAS:5263360, VMs:4724736, Oracle:1080898,SQL:353663, UDB:342000, NoSQL:71816, prod:true  },
+};
+
+// Existing cluster physical capacity in TB
+const EXIST_TB = {
+  'ATL Test':4100, 'SAT Test':4400,
+  'ATL PCI':926,   'SAT PCI':1200,
+  'ATL Prod':11900,'SAT Prod':11800,
+};
+
+const ENT_LIC_TB  = 24 * 1024;   // 24,576 TB
+const FND_LIC_TB  = 37 * 1024;   // 37,888 TB
+const NODE_TB     = 180;
+
+const REPL_PAIRS = [['ATL Test','SAT Test'],['ATL PCI','SAT PCI'],['ATL Prod','SAT Prod']];
+const DR = { VM:2.8, DB:3.0, NAS:1.3, NoSQL:1.3 };
+const CR = { VM:0.02, DB:0.05, NAS:0.001 };
+const CLUSTER_COLORS = {
+  'ATL Test':'#EF9F27','SAT Test':'#BA7517',
+  'ATL PCI':'#378ADD', 'SAT PCI':'#0C447C',
+  'ATL Prod':'#1D9E75','SAT Prod':'#085041',
+};
+const WL_COLORS = ['#378ADD','#1D9E75','#EF9F27','#E24B4A','#7F77DD','#D4537E'];
+
+let scenario=1;
+let gChart=null, wChart=null, rChart=null;
+
+function fb(r,dr){ return r/dr; }
+function inc(r,dr,cr,d){ return (r*cr/dr)*d; }
+function lg(r,cr,d){ return r*cr*d; }
+function peer(name){ for(const p of REPL_PAIRS){ if(p[0]===name) return p[1]; if(p[1]===name) return p[0]; } return null; }
+
+function local(name){
+  const d=RAW[name], ret=d.prod?35:14;
+  let vm=d.VMs; if(scenario===2) vm=Math.max(0,d.VMs-d.SQL-d.UDB-d.NoSQL);
+  return {
+    nas:   fb(d.NAS,DR.NAS)    +inc(d.NAS,DR.NAS,CR.NAS,ret),
+    vms:   fb(vm,DR.VM)        +inc(vm,DR.VM,CR.VM,ret),
+    oracle:fb(d.Oracle,DR.DB)  +inc(d.Oracle,DR.DB,CR.DB,ret)+lg(d.Oracle,CR.DB,ret),
+    sql:   fb(d.SQL,DR.DB)     +inc(d.SQL,DR.DB,CR.DB,ret)   +lg(d.SQL,CR.DB,ret),
+    udb:   fb(d.UDB,DR.DB)     +inc(d.UDB,DR.DB,CR.DB,ret)   +lg(d.UDB,CR.DB,ret),
+    nosql: fb(d.NoSQL,DR.NoSQL)+inc(d.NoSQL,DR.NoSQL,CR.DB,ret)+lg(d.NoSQL,CR.DB,ret),
+  };
+}
+
+function calc(name,repl){
+  const l=local(name), lt=l.nas+l.vms+l.oracle+l.sql+l.udb+l.nosql;
+  let rt=0; if(repl){ const p=peer(name); if(p){ const pl=local(p); rt=pl.nas+pl.vms+pl.oracle+pl.sql+pl.udb+pl.nosql; } }
+  return {...l, localGB:lt, replGB:rt, totalGB:lt+rt};
+}
+
+function toTB(gb){ return gb/1024; }
+function fTB(gb,d=1){ return (gb/1024).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fGB(gb){ return Math.round(gb).toLocaleString('en-US'); }
+function fPct(p){ return p.toFixed(1)+'%'; }
+function barClr(pct){ return pct>=100?'#E24B4A':pct>=85?'#EF9F27':'#1D9E75'; }
+function pillCls(pct){ return pct>=100?'pill-over':pct>=85?'pill-warn':'pill-ok'; }
+function pillTxt(pct,gap){ return pct>=100?`Overage: ${Math.abs(gap).toLocaleString('en-US',{maximumFractionDigits:0})} TB over`:`${gap.toLocaleString('en-US',{maximumFractionDigits:0})} TB remaining (${(100-pct).toFixed(1)}% free)`; }
+function licCls(pct){ return pct>=100?'over':pct>=85?'warn':'ok'; }
+function nodesNeeded(reqTB,existTB){ return reqTB>existTB?Math.ceil((reqTB-existTB)/NODE_TB):0; }
+function nodeCls(n){ return n===0?'zero':n<=5?'some':'many'; }
+
+function setScenario(s){
+  scenario=s;
+  document.getElementById('s1btn').classList.toggle('active',s===1);
+  document.getElementById('s2btn').classList.toggle('active',s===2);
+  render();
+}
+
+function render(){
+  const repl=document.getElementById('replToggle').checked;
+  document.getElementById('replLabel').textContent=repl?'On':'Off';
+  const yi=parseInt(document.getElementById('yearSel').value);
+  const g=Math.pow(1.15,yi);
+  const names=Object.keys(RAW);
+  const allR=names.map(n=>({name:n,r:calc(n,repl)}));
+
+  // Summary
+  const grand=allR.reduce((s,x)=>s+x.r.totalGB*g,0);
+  const prod =allR.filter(x=>RAW[x.name].prod).reduce((s,x)=>s+x.r.totalGB*g,0);
+  const np   =allR.filter(x=>!RAW[x.name].prod).reduce((s,x)=>s+x.r.totalGB*g,0);
+  const replGB=allR.reduce((s,x)=>s+x.r.replGB*g,0);
+  const locGB =allR.reduce((s,x)=>s+x.r.localGB*g,0);
+
+  document.getElementById('summaryBar').innerHTML=`
+    <div class="summary-card"><div class="summary-label">Total all clusters</div><div class="summary-value">${fTB(grand)} TB</div><div class="summary-sub">${fGB(grand)} GB</div></div>
+    <div class="summary-card"><div class="summary-label">Production clusters</div><div class="summary-value">${fTB(prod)} TB</div><div class="summary-sub">${fGB(prod)} GB</div></div>
+    <div class="summary-card"><div class="summary-label">Non-prod clusters</div><div class="summary-value">${fTB(np)} TB</div><div class="summary-sub">${fGB(np)} GB</div></div>
+    <div class="summary-card"><div class="summary-label">Replication overhead</div><div class="summary-value">${repl?fTB(replGB)+' TB':'—'}</div><div class="summary-sub">${repl?fGB(replGB)+' GB':'Replication off'}</div></div>
+    <div class="summary-card"><div class="summary-label">Year shown</div><div class="summary-value">Year ${yi+1}</div><div class="summary-sub">${yi===0?'Baseline':'+'+Math.round((g-1)*100)+'% growth'}</div></div>
+  `;
+
+  // Cluster cards
+  const cc=document.getElementById('clusterCards'); cc.innerHTML='';
+  names.forEach(name=>{
+    const r=calc(name,repl),d=RAW[name],p=peer(name);
+    const el=document.createElement('div'); el.className='cluster-card '+(d.prod?'prod':'nonprod');
+    el.innerHTML=`
+      <div class="cluster-name">${name}</div>
+      <div class="cluster-meta">${d.prod?'Production':'Non-production'} &middot; ${d.prod?35:14}-day retention</div>
+      <div class="cluster-total">${fTB(r.totalGB*g)} TB</div>
+      <div class="cluster-unit">${fGB(r.totalGB*g)} GB total required</div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span>NAS</span><span class="val">${fTB(r.nas*g)} TB</span></div>
+        <div class="breakdown-row"><span>VMs${scenario===2?' (excl. DB)':''}</span><span class="val">${fTB(r.vms*g)} TB</span></div>
+        <div class="breakdown-row"><span>Oracle</span><span class="val">${fTB(r.oracle*g)} TB</span></div>
+        ${d.SQL>0?`<div class="breakdown-row"><span>SQL</span><span class="val">${fTB(r.sql*g)} TB</span></div>`:''}
+        ${d.UDB>0?`<div class="breakdown-row"><span>UDB</span><span class="val">${fTB(r.udb*g)} TB</span></div>`:''}
+        ${d.NoSQL>0?`<div class="breakdown-row"><span>No-SQL</span><span class="val">${fTB(r.nosql*g)} TB</span></div>`:''}
+        <div class="breakdown-row" style="margin-top:4px;padding-top:4px;border-top:0.5px solid var(--border-light)"><span>Local subtotal</span><span class="val">${fTB(r.localGB*g)} TB</span></div>
+        ${repl&&r.replGB>0?`<div class="breakdown-row repl-row"><span>+ Replicated from ${p}</span><span class="val">${fTB(r.replGB*g)} TB</span></div>`:''}
+      </div>
+      ${repl&&p?`<div class="repl-badge">&#8596; Replicated with ${p}</div>`:''}
+    `;
+    cc.appendChild(el);
+  });
+
+  // Charts
+  const yrs=[0,1,2,3,4];
+  document.getElementById('growthLegend').innerHTML=names.map(n=>`<span><span class="legend-dot" style="background:${CLUSTER_COLORS[n]}"></span>${n}</span>`).join('');
+  if(gChart) gChart.destroy();
+  gChart=new Chart(document.getElementById('growthChart'),{type:'line',data:{labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],datasets:names.map(n=>({label:n,data:yrs.map(y=>parseFloat(toTB(calc(n,repl).totalGB*Math.pow(1.15,y)).toFixed(1))),borderColor:CLUSTER_COLORS[n],backgroundColor:CLUSTER_COLORS[n]+'20',borderWidth:2,pointRadius:4,tension:0.3,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'},title:{display:true,text:'TB',font:{size:11}}}}}});
+
+  const wlKeys=['nas','vms','oracle','sql','udb','nosql'], wlLbls=['NAS','VMs','Oracle','SQL','UDB','No-SQL'];
+  document.getElementById('workloadLegend').innerHTML=wlLbls.map((w,i)=>`<span><span class="legend-dot" style="background:${WL_COLORS[i]}"></span>${w}</span>`).join('');
+  if(wChart) wChart.destroy();
+  wChart=new Chart(document.getElementById('workloadChart'),{type:'bar',data:{labels:names,datasets:wlKeys.map((k,i)=>({label:wlLbls[i],data:names.map(n=>parseFloat(toTB(calc(n,repl)[k]*g).toFixed(1))),backgroundColor:WL_COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'}}}}});
+
+  document.getElementById('replLegend').innerHTML=`<span><span class="legend-dot" style="background:#378ADD"></span>Local</span><span><span class="legend-dot" style="background:#85B7EB"></span>Replicated</span>`;
+  if(rChart) rChart.destroy();
+  rChart=new Chart(document.getElementById('replChart'),{type:'bar',data:{labels:names,datasets:[{label:'Local',data:names.map(n=>parseFloat(toTB(calc(n,repl).localGB*g).toFixed(1))),backgroundColor:'#378ADD'},{label:'Replicated',data:names.map(n=>parseFloat(toTB(calc(n,repl).replGB*g).toFixed(1))),backgroundColor:'#85B7EB'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'}}}}});
+
+  // ── License cards (selected year) ────────────────────────────
+  const entUsed=toTB(locGB), fndUsed=repl?toTB(replGB):0;
+  const entPct=(entUsed/ENT_LIC_TB)*100, fndPct=(fndUsed/FND_LIC_TB)*100;
+  const entGap=ENT_LIC_TB-entUsed, fndGap=FND_LIC_TB-fndUsed;
+
+  document.getElementById('licenseCards').innerHTML=`
+    <div class="license-card">
+      <div class="license-title">Enterprise Edition</div>
+      <div class="license-edition">Covers local source data protection — all clusters combined</div>
+      <div class="license-row"><span class="lbl">Licensed capacity</span><span class="val">${ENT_LIC_TB.toLocaleString('en-US')} TB (24 PB)</span></div>
+      <div class="license-row"><span class="lbl">Required — Year ${yi+1}</span><span class="val">${entUsed.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="license-bar-wrap"><div class="license-bar-fill" style="width:${Math.min(100,entPct).toFixed(1)}%;background:${barClr(entPct)};"></div></div>
+      <div class="license-row"><span class="lbl">Utilization</span><span class="val" style="color:${barClr(entPct)}">${fPct(entPct)}</span></div>
+      <div class="license-row"><span class="lbl">${entGap>=0?'Remaining':'Overage'}</span><span class="val" style="color:${barClr(entPct)}">${entGap>=0?'+':''}${Math.abs(entGap).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
+      <span class="status-pill ${pillCls(entPct)}">${pillTxt(entPct,entGap)}</span>
+    </div>
+    <div class="license-card">
+      <div class="license-title">Foundation Edition</div>
+      <div class="license-edition">Covers replicated copy storage${repl?'':' — replication currently off'}</div>
+      <div class="license-row"><span class="lbl">Licensed capacity</span><span class="val">${FND_LIC_TB.toLocaleString('en-US')} TB (37 PB)</span></div>
+      <div class="license-row"><span class="lbl">Required — Year ${yi+1}</span><span class="val">${fndUsed.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="license-bar-wrap"><div class="license-bar-fill" style="width:${Math.min(100,fndPct).toFixed(1)}%;background:${barClr(fndPct)};"></div></div>
+      <div class="license-row"><span class="lbl">Utilization</span><span class="val" style="color:${barClr(fndPct)}">${fPct(fndPct)}</span></div>
+      <div class="license-row"><span class="lbl">${fndGap>=0?'Remaining':'Overage'}</span><span class="val" style="color:${barClr(fndPct)}">${fndGap>=0?'+':''}${Math.abs(fndGap).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
+      <span class="status-pill ${pillCls(fndPct)}">${pillTxt(fndPct,fndGap)}</span>
+    </div>
+  `;
+
+  // ── License 5-year table ──────────────────────────────────────
+  document.getElementById('licHead').innerHTML=`<th>License metric</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
+
+  const licYr=yrs.map(y=>{
+    const gy=Math.pow(1.15,y);
+    const loc=allR.reduce((s,x)=>s+x.r.localGB*gy,0);
+    const rep=repl?allR.reduce((s,x)=>s+x.r.replGB*gy,0):0;
+    const eu=toTB(loc), fu=toTB(rep);
+    const ep=(eu/ENT_LIC_TB)*100, fp=(fu/FND_LIC_TB)*100;
+    return {eu,fu,ep,fp,eg:ENT_LIC_TB-eu,fg:FND_LIC_TB-fu};
+  });
+
+  document.getElementById('licBody').innerHTML=`
+    <tr><td style="font-weight:500">Enterprise — used (TB)</td>${licYr.map(r=>`<td class="${licCls(r.ep)}">${r.eu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td style="color:var(--text-secondary)">Enterprise — utilization</td>${licYr.map(r=>`<td class="${licCls(r.ep)}">${fPct(r.ep)}</td>`).join('')}</tr>
+    <tr><td style="color:var(--text-secondary)">Enterprise — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${licCls(r.ep)}">${r.eg>=0?'+':''}${Math.abs(r.eg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+    <tr class="spacer"><td colspan="${yrs.length+1}"></td></tr>
+    <tr><td style="font-weight:500">Foundation — used (TB)</td>${licYr.map(r=>`<td class="${licCls(r.fp)}">${r.fu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td style="color:var(--text-secondary)">Foundation — utilization</td>${licYr.map(r=>`<td class="${licCls(r.fp)}">${fPct(r.fp)}</td>`).join('')}</tr>
+    <tr><td style="color:var(--text-secondary)">Foundation — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${licCls(r.fp)}">${r.fg>=0?'+':''}${Math.abs(r.fg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+  `;
+
+  // ── Cluster capacity cards (selected year) ────────────────────
+  const cap=document.getElementById('capCards'); cap.innerHTML='';
+  names.forEach(name=>{
+    const r=calc(name,repl), reqTB=toTB(r.totalGB*g), existTB=EXIST_TB[name];
+    const nodes=nodesNeeded(reqTB,existTB), addedTB=nodes*NODE_TB, newTot=existTB+addedTB;
+    const utilPct=(reqTB/existTB)*100, clr=barClr(utilPct), d=RAW[name];
+    const el=document.createElement('div'); el.className='cap-card '+(d.prod?'prod':'nonprod');
+    el.innerHTML=`
+      <div class="cap-name">${name}</div>
+      <div class="cap-exist">Existing capacity: ${existTB.toLocaleString('en-US')} TB</div>
+      <div class="license-row"><span class="lbl">Required — Year ${yi+1}</span><span class="val">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="license-bar-wrap"><div class="license-bar-fill" style="width:${Math.min(100,utilPct).toFixed(1)}%;background:${clr};"></div></div>
+      <div class="license-row"><span class="lbl">Utilization of existing</span><span class="val" style="color:${clr}">${fPct(utilPct)}</span></div>
+      <div class="license-row"><span class="lbl">${reqTB>existTB?'Capacity gap':'Headroom'}</span><span class="val" style="color:${clr}">${Math.abs(existTB-reqTB).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
+      <div class="nodes-big" style="color:${nodes===0?'var(--color-success-text)':nodes<=5?'#BA7517':'#A32D2D'}">${nodes}</div>
+      <div class="nodes-lbl">additional R760 node${nodes===1?'':'s'} needed</div>
+      <div class="nodes-detail">${nodes>0?`+${addedTB.toLocaleString('en-US')} TB capacity → new cluster total ${newTot.toLocaleString('en-US')} TB`:'No expansion required this year'}</div>
+    `;
+    cap.appendChild(el);
+  });
+
+  // ── Node 5-year table ─────────────────────────────────────────
+  document.getElementById('nodeHead').innerHTML=`<th>Cluster (existing TB)</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
+  document.getElementById('nodeBody').innerHTML=names.map(name=>{
+    const existTB=EXIST_TB[name];
+    return `<tr>
+      <td>${name} &nbsp;<span style="font-weight:400;color:var(--text-secondary)">(${existTB.toLocaleString('en-US')} TB)</span></td>
+      ${yrs.map(y=>{
+        const gy=Math.pow(1.15,y), reqTB=toTB(calc(name,repl).totalGB*gy);
+        const n=nodesNeeded(reqTB,existTB);
+        return `<td class="${nodeCls(n)}">${n===0?'—':'+'+n+' nodes'}</td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>
