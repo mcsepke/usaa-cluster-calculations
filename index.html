@@ -147,7 +147,7 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 
 <div class="sec-lbl">Workload source capacities by cluster (GB)</div>
 <div class="tbl-card">
-  <div class="note">Scenario 1: VMs = full input value. &nbsp;Scenario 2: VMs protected = VMs minus SQL, UDB, No-SQL. &nbsp;Scenario 3: Same as Scenario 2 plus NAS for ATL Prod &amp; SAT Prod offloaded to NAS Cloud Direct (removed from cluster). Oracle always stands alone.</div>
+  <div class="note">Scenario 1: VMs = full input value. &nbsp;Scenario 2: VMs protected = VMs minus SQL, UDB, No-SQL. &nbsp;Scenario 3: Same as Scenario 2 but ALL cluster NAS workloads are offloaded to NAS Cloud Direct (removed from all clusters). Oracle always stands alone.</div>
   <table class="itbl"><thead><tr><th style="text-align:left;min-width:80px">Workload</th><th class="th-np">ATL Test</th><th class="th-np">SAT Test</th><th class="th-pr">ATL PCI</th><th class="th-pr">SAT PCI</th><th class="th-pr">ATL Prod</th><th class="th-pr">SAT Prod</th></tr></thead><tbody id="wlBody"></tbody></table>
 </div>
 
@@ -162,7 +162,7 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 <div class="cl-grid" id="clCards"></div>
 
 <div id="ncdSection" class="s3-only">
-  <div class="sec-lbl" style="border-top:none;color:#0F6E56">NAS Cloud Direct — ATL Prod &amp; SAT Prod NAS offloaded to object storage</div>
+  <div class="sec-lbl" style="border-top:none;color:#0F6E56">NAS Cloud Direct — all cluster NAS workloads offloaded to object storage</div>
   <div class="ncd-info" id="ncdInfo"></div>
   <div class="cl-grid" id="ncdCards"></div>
 </div>
@@ -197,7 +197,7 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 <script>
 const NAMES=['ATL Test','SAT Test','ATL PCI','SAT PCI','ATL Prod','SAT Prod'];
 const IS_PROD=[false,false,true,true,true,true];
-const NCD_IDX=[4,5];
+const NCD_IDX=[0,1,2,3,4,5]; // Scenario 3: ALL clusters offload NAS to NCD
 const WL_KEYS=['NAS','VMs','Oracle','SQL','UDB','NoSQL'];
 const WL_LABELS=['NAS','VMs','Oracle','SQL','UDB','No-SQL'];
 const WL_COLORS=['#378ADD','#1D9E75','#EF9F27','#E24B4A','#7F77DD','#D4537E'];
@@ -355,28 +355,27 @@ function render(){
 
   // Scenario 3 NCD section
   const ncdSec=document.getElementById('ncdSection');
-  const atlNAS=RAW[4].NAS,satNAS=RAW[5].NAS;
-  const ncdUsed=toTB((atlNAS+satNAS)*g),ncdPct=(ncdUsed/NCD)*100,ncdGap=NCD-ncdUsed;
+  // Scenario 3: ALL clusters offload NAS to NCD
+  const allNasSrcGB=NAMES.reduce((s,_,ni)=>s+RAW[ni].NAS,0);
+  const ncdUsed=toTB(allNasSrcGB*g),ncdPct=(ncdUsed/NCD)*100,ncdGap=NCD-ncdUsed;
   if(scen===3){
     ncdSec.classList.add('show');
-    document.getElementById('ncdInfo').innerHTML=`<strong>ATL Prod NAS:</strong> ${fTB(atlNAS)} TB source &rarr; ${fTB(atlNAS*g)} TB Year ${yi+1}. &nbsp;<strong>SAT Prod NAS:</strong> ${fTB(satNAS)} TB source &rarr; ${fTB(satNAS*g)} TB Year ${yi+1}. &nbsp;Combined NCD source: <strong>${fTB((atlNAS+satNAS)*g)} TB</strong>, using <strong>${fPct(ncdPct)}</strong> of ${getV('g_ncd_lic',12)} PB license. ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'}. NCD license measured by source data size protected. Estimated stored in object storage after ${DR_NCD}:1 reduction: <strong>${fTB((atlNAS+satNAS)*g/DR_NCD)} TB</strong>.`;
+    const perCluster=NAMES.map((n,ni)=>`<strong>${n}:</strong> ${fTB(RAW[ni].NAS)} TB &rarr; ${fTB(RAW[ni].NAS*g)} TB`).join(' &nbsp;|&nbsp; ');
+    document.getElementById('ncdInfo').innerHTML=`${perCluster} &nbsp;|&nbsp; <strong>Combined NCD source Year ${yi+1}:</strong> ${fTB(allNasSrcGB*g)} TB &nbsp;|&nbsp; NCD license: ${fPct(ncdPct)} of ${getV('g_ncd_lic',12)} PB &nbsp;|&nbsp; ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'} &nbsp;|&nbsp; Est. stored in object storage: <strong>${fTB(allNasSrcGB*g/DR_NCD)} TB</strong>`;
     const nc=document.getElementById('ncdCards');nc.innerHTML='';
-    const totalNcdSrcGB=(atlNAS+satNAS)*g;
+    const totalNcdSrcGB=allNasSrcGB*g;
     const totalNcdStoredGB=totalNcdSrcGB/DR_NCD;
     const el=document.createElement('div');el.className='cl-card ncd-style';
     el.innerHTML=`
-      <div class="cl-name">Combined NAS Cloud Direct &mdash; Object Storage (RCV)</div>
-      <div class="cl-meta">ATL Prod + SAT Prod &middot; 1 full + incremental forever</div>
+      <div class="cl-name">Combined NAS Cloud Direct &mdash; All Clusters &mdash; Object Storage (RCV)</div>
+      <div class="cl-meta">All 6 clusters &middot; 1 full + incremental forever</div>
       <div class="cl-tot">${fTB(totalNcdStoredGB)} TB</div>
       <div class="cl-unit">Estimated total stored in object storage</div>
       <div class="bkdn">
-        <div class="brow"><span>ATL Prod NAS source (Year 1)</span><span class="v">${fTB(atlNAS)} TB</span></div>
-        <div class="brow"><span>SAT Prod NAS source (Year 1)</span><span class="v">${fTB(satNAS)} TB</span></div>
-        <div class="brow"><span>Combined source Year ${yi+1}</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
+        ${NAMES.map((n,ni)=>`<div class="brow"><span>${n} NAS (Year 1)</span><span class="v">${fTB(RAW[ni].NAS)} TB</span></div>`).join('')}
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Combined source Year ${yi+1}</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
         <div class="brow"><span>NCD data reduction</span><span class="v">${DR_NCD}:1</span></div>
-        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)">
-          <span>Total stored in object storage</span><span class="v">${fTB(totalNcdStoredGB)} TB</span>
-        </div>
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Total stored in object storage</span><span class="v">${fTB(totalNcdStoredGB)} TB</span></div>
         <div class="brow" style="color:#0F6E56"><span>NCD license consumed (source size)</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
       </div>
       <div class="ncd-pill">NAS Cloud Direct &mdash; Object Storage (RCV)</div>
@@ -406,16 +405,16 @@ function render(){
   }
 
   const lw=document.getElementById('licCardsWrap');
-  const entHtml=licCard('Enterprise edition',`Local source data${scen===3?' — NAS removed from ATL/SAT Prod':' — all clusters'}`,ENT,getV('g_ent',24),entU,eP,eG);
+  const entHtml=licCard('Enterprise edition',`Local source data${scen===3?' — NAS removed from all clusters':' — all clusters'}`,ENT,getV('g_ent',24),entU,eP,eG);
   const fndHtml=licCard('Foundation edition',`Replicated copy storage${repl?'':' — replication off'}`,FND,getV('g_fnd',37),fndU,fP,fG);
-  const ncdHtml=licCard('NAS Cloud Direct','ATL Prod + SAT Prod NAS &rarr; Object Storage (RCV). Licensed by source data size.',NCD,getV('g_ncd_lic',12),ncdUsed,nP,nG,'ncd-bdr');
+  const ncdHtml=licCard('NAS Cloud Direct','All clusters NAS &rarr; Object Storage (RCV). Licensed by source data size.',NCD,getV('g_ncd_lic',12),ncdUsed,nP,nG,'ncd-bdr');
   lw.innerHTML=scen===3?`<div class="three-col">${entHtml}${fndHtml}${ncdHtml}</div>`:`<div class="two-col">${entHtml}${fndHtml}</div>`;
 
   document.getElementById('licHd').innerHTML=`<th>License metric</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
   const licYr=yrs.map(y=>{
     const gy=Math.pow(1+gr,y); // Year1=1.0, Year2=(1+gr)^1, ...
     const loc=allR.reduce((s,r)=>s+r.localGB*gy,0),rep=repl?allR.reduce((s,r)=>s+r.replGB*gy,0):0;
-    const eu=toTB(loc),fu=toTB(rep),nu=toTB((atlNAS+satNAS)*gy);
+    const eu=toTB(loc),fu=toTB(rep),nu=toTB(NAMES.reduce((s,_,ni)=>s+RAW[ni].NAS,0)*gy);
     return{eu,fu,nu,ep:(eu/ENT)*100,fp:(fu/FND)*100,np:(nu/NCD)*100,eg:ENT-eu,fg:FND-fu,ng:NCD-nu};
   });
   let rows=`
