@@ -431,6 +431,12 @@ function render(){
 }
 
 buildWlTable();
+// Default state: Scenario 2, replication on, Year 5
+scen=2;
+document.getElementById('s1btn').classList.remove('on');
+document.getElementById('s2btn').classList.add('on');
+document.getElementById('rTog').checked=true;
+document.getElementById('yrSel').value='4';
 render();
 </script>
 </body>
