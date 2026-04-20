@@ -246,16 +246,20 @@ function getRaw(){return NAMES.map((_,ni)=>{const d={prod:IS_PROD[ni]};WL_KEYS.f
 function peerIdx(ni){for(const p of PAIRS){const a=NAMES.indexOf(p[0]),b=NAMES.indexOf(p[1]);if(a===ni)return b;if(b===ni)return a;}return -1;}
 
 function calcLocal(d,ni,DR,CR,ret){
-  const fb=(r,dr)=>r/dr,inc=(r,dr,cr,dy)=>(r*cr/dr)*dy,lg=(r,cr,dy)=>r*cr*dy;
+  const fb=(r,dr)=>r/dr;
+  // Incremental backup: source * change_rate / DR * days  (data reduction applied)
+  const inc=(r,dr,cr,dy)=>(r*cr/dr)*dy;
+  // Transaction logs: source * change_rate * days  (same change rate, NO data reduction)
+  const lg=(r,cr,dy)=>r*cr*dy;
   const vmGB=(scen===1)?d.VMs:Math.max(0,d.VMs-d.SQL-d.UDB-d.NoSQL);
   const nasGB=(scen===3&&NCD_IDX.includes(ni))?0:d.NAS;
   return{
-    nas:fb(nasGB,DR.NAS)+inc(nasGB,DR.NAS,CR.NAS,ret),
-    vms:fb(vmGB,DR.VM)+inc(vmGB,DR.VM,CR.VM,ret),
-    oracle:fb(d.Oracle,DR.DB)+inc(d.Oracle,DR.DB,CR.DB,ret)+lg(d.Oracle,CR.DB,ret),
-    sql:fb(d.SQL,DR.DB)+inc(d.SQL,DR.DB,CR.DB,ret)+lg(d.SQL,CR.DB,ret),
-    udb:fb(d.UDB,DR.DB)+inc(d.UDB,DR.DB,CR.DB,ret)+lg(d.UDB,CR.DB,ret),
-    nosql:fb(d.NoSQL,DR.NoSQL)+inc(d.NoSQL,DR.NoSQL,CR.NoSQL,ret)+lg(d.NoSQL,CR.NoSQL,ret),
+    nas:    fb(nasGB,   DR.NAS)  +inc(nasGB,   DR.NAS,   CR.NAS,   ret),
+    vms:    fb(vmGB,    DR.VM)   +inc(vmGB,     DR.VM,    CR.VM,    ret),
+    oracle: fb(d.Oracle,DR.DB)   +inc(d.Oracle, DR.DB,    CR.DB,    ret)+lg(d.Oracle,CR.DB,ret),
+    sql:    fb(d.SQL,   DR.DB)   +inc(d.SQL,    DR.DB,    CR.DB,    ret)+lg(d.SQL,   CR.DB,ret),
+    udb:    fb(d.UDB,   DR.DB)   +inc(d.UDB,    DR.DB,    CR.DB,    ret)+lg(d.UDB,   CR.DB,ret),
+    nosql:  fb(d.NoSQL, DR.NoSQL)+inc(d.NoSQL,  DR.NoSQL, CR.NoSQL, ret)+lg(d.NoSQL, CR.NoSQL,ret),
   };
 }
 
