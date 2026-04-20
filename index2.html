@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubrik Cluster Sizing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg-primary:#ffffff;--bg-secondary:#f5f5f3;--bg-tertiary:#eeede9;--text-primary:#1a1a1a;--text-secondary:#6b6b68;--border-light:rgba(0,0,0,0.1);--border-med:rgba(0,0,0,0.18);--success-bg:#EAF3DE;--success-text:#3B6D11;--warn-bg:#FAEEDA;--warn-text:#854F0B;--danger-bg:#FCEBEB;--danger-text:#A32D2D;--info-bg:#E6F1FB;--info-text:#185FA5;--radius-md:8px;--radius-lg:12px}
+@media(prefers-color-scheme:dark){:root{--bg-primary:#1e1e1c;--bg-secondary:#272725;--bg-tertiary:#2f2f2d;--text-primary:#f0efea;--text-secondary:#9e9e98;--border-light:rgba(255,255,255,0.1);--border-med:rgba(255,255,255,0.18);--success-bg:#173404;--success-text:#C0DD97;--warn-bg:#412402;--warn-text:#FAC775;--danger-bg:#501313;--danger-text:#F7C1C1;--info-bg:#042C53;--info-text:#85B7EB}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-tertiary);color:var(--text-primary);min-height:100vh}
+.header{background:var(--bg-primary);border-bottom:0.5px solid var(--border-light);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100}
+.header-title{font-size:18px;font-weight:500}.header-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.rubrik-badge{font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;background:#00B4A2;color:white}
+.main{max-width:1300px;margin:0 auto;padding:1.5rem}
+.sec-lbl{font-size:10px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin:1.5rem 0 .6rem;padding-top:1.25rem;border-top:0.5px solid var(--border-light)}
+.sec-lbl.first{border-top:none;margin-top:0;padding-top:0}
+.ctrl-bar{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.85rem 1.25rem;display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:1.25rem}
+.ctrl-grp{display:flex;align-items:center;gap:8px}.ctrl-lbl{font-size:12px;color:var(--text-secondary);white-space:nowrap}
+.tog{display:flex;border:0.5px solid var(--border-med);border-radius:var(--radius-md);overflow:hidden}
+.tog button{padding:6px 14px;font-size:12px;background:transparent;border:none;cursor:pointer;color:var(--text-secondary);transition:background .15s,color .15s;white-space:nowrap}
+.tog button.on{background:var(--info-bg);color:var(--info-text);font-weight:500}
+.sw{position:relative;width:38px;height:22px;flex-shrink:0}.sw input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:var(--border-med);border-radius:22px;cursor:pointer;transition:background .2s}
+.sl:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translateX(16px)}
+.dvdr{width:0.5px;height:28px;background:var(--border-light)}
+.global-inputs{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:1.25rem}
+.g-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.65rem .8rem}
+.g-card.ncd-inp{border-color:#0F6E56}.g-card.ncd-inp .g-lbl{color:#0F6E56}
+.g-lbl{font-size:10px;color:var(--text-secondary);margin-bottom:5px}
+.g-inp-wrap{display:flex;align-items:center;gap:5px}
+.g-inp-wrap input{width:64px;font-size:13px;font-weight:500;padding:4px 6px;border:0.5px solid var(--border-med);border-radius:var(--radius-md);background:var(--bg-secondary);color:var(--text-primary);text-align:right}
+.g-inp-wrap input:focus{outline:none;border-color:#378ADD}.g-inp-wrap .unit{font-size:11px;color:var(--text-secondary)}
+.tbl-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;overflow-x:auto}
+.itbl{border-collapse:collapse;font-size:12px;width:100%}
+.itbl th{font-size:11px;font-weight:500;color:var(--text-secondary);padding:6px 8px;border-bottom:0.5px solid var(--border-light);text-align:right;white-space:nowrap}
+.itbl th:first-child{text-align:left}
+.itbl td{padding:5px 7px;border-bottom:0.5px solid var(--border-light);text-align:right;vertical-align:middle}
+.itbl td:first-child{text-align:left;color:var(--text-secondary)}.itbl tr:last-child td{border-bottom:none}
+.itbl input[type=number]{width:96px;font-size:12px;padding:4px 7px;border:0.5px solid var(--border-med);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);text-align:right}
+.itbl input[type=number]:focus{outline:none;border-color:#378ADD}
+.th-np{color:#BA7517!important;font-weight:500}.th-pr{color:#185FA5!important;font-weight:500}
+.wdot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.note{font-size:11px;color:var(--text-secondary);margin-bottom:10px;font-style:italic}
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
+.sum-card{background:var(--bg-secondary);border-radius:var(--radius-md);padding:.75rem 1rem}
+.sum-lbl{font-size:11px;color:var(--text-secondary);margin-bottom:4px}.sum-val{font-size:20px;font-weight:500}.sum-sub{font-size:10px;color:var(--text-secondary);margin-top:2px}
+.cl-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:1.25rem}
+.cl-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.75rem .85rem}
+.cl-card.prod{border-top:2.5px solid #378ADD}.cl-card.nonprod{border-top:2.5px solid #EF9F27;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.cl-card.ncd-style{border-top:2.5px solid #0F6E56;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.cl-name{font-size:12px;font-weight:500}.cl-meta{font-size:10px;color:var(--text-secondary);margin-top:2px;margin-bottom:8px}
+.cl-tot{font-size:20px;font-weight:500;line-height:1.1}.cl-unit{font-size:10px;color:var(--text-secondary);margin-top:2px}
+.bkdn{margin-top:10px;border-top:0.5px solid var(--border-light);padding-top:8px}
+.brow{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0}
+.brow .v{color:var(--text-primary);font-weight:500}.brow.rr,.brow.rr .v{color:var(--info-text)}.brow.ncd,.brow.ncd .v{color:#0F6E56}
+.rpill{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:var(--success-bg);color:var(--success-text);margin-top:7px;font-weight:500}
+.ncd-pill{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:#E1F5EE;color:#085041;margin-top:7px;font-weight:500}
+.chart-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem}
+.ctitle{font-size:13px;font-weight:500;margin-bottom:10px}
+.lg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.lg span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)}
+.ldot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.25rem}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+.lic-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1rem 1.25rem}
+.lic-card.ncd-bdr{border-top:2px solid #0F6E56}
+.lic-title{font-size:14px;font-weight:500}.lic-sub{font-size:11px;color:var(--text-secondary);margin-top:2px;margin-bottom:12px}
+.lrow{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.lrow .ll{color:var(--text-secondary)}.lrow .lv{font-weight:500}
+.bar-wrap{background:var(--bg-secondary);border-radius:6px;height:9px;margin:6px 0 4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width .4s}
+.spill{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500;margin-top:8px}
+.s-ok{background:var(--success-bg);color:var(--success-text)}.s-warn{background:var(--warn-bg);color:var(--warn-text)}.s-over{background:var(--danger-bg);color:var(--danger-text)}
+.ncd-info{background:#E1F5EE;border:0.5px solid #9FE1CB;border-radius:var(--radius-md);padding:.85rem 1rem;margin-bottom:1.25rem;font-size:12px;color:#085041;line-height:1.6}
+.s3-only{display:none}.s3-only.show{display:block}
+.out-tbl{border-collapse:collapse;font-size:12px;width:100%;table-layout:fixed}
+.out-tbl th{font-size:11px;font-weight:500;color:var(--text-secondary);padding:6px 10px;border-bottom:0.5px solid var(--border-light);text-align:right;white-space:nowrap}
+.out-tbl th:first-child{text-align:left;width:240px}
+.out-tbl td{padding:7px 10px;border-bottom:0.5px solid var(--border-light);text-align:right;white-space:nowrap}
+.out-tbl td:first-child{text-align:left;color:var(--text-secondary)}.out-tbl tr:last-child td{border-bottom:none}
+.out-tbl td.ok{color:var(--success-text)}.out-tbl td.warn{color:var(--warn-text);font-weight:500}.out-tbl td.over{color:var(--danger-text);font-weight:500}
+.out-tbl td.zero{color:var(--success-text)}.out-tbl td.some{color:var(--warn-text);font-weight:500}.out-tbl td.many{color:var(--danger-text);font-weight:500}
+.out-tbl td.nok{color:#0F6E56}.out-tbl td.nwarn{color:#854F0B;font-weight:500}.out-tbl td.nover{color:var(--danger-text);font-weight:500}
+.out-tbl tr.sp td{padding:3px;border:none}
+.footer{text-align:center;font-size:11px;color:var(--text-secondary);padding:2rem;border-top:0.5px solid var(--border-light);margin-top:1rem}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><div class="header-title">Rubrik Cluster Sizing Dashboard</div><div class="header-sub">All inputs editable &middot; Changes recalculate instantly &middot; Growth compounds annually</div></div>
+  <span class="rubrik-badge">RUBRIK</span>
+</div>
+<div class="main">
+
+<div class="ctrl-bar">
+  <div class="ctrl-grp">
+    <span class="ctrl-lbl">Scenario</span>
+    <div class="tog">
+      <button class="on" id="s1btn" onclick="setScen(1)">Scenario 1 &mdash; Full VM Backups Included</button>
+      <button id="s2btn" onclick="setScen(2)">Scenario 2 &mdash; DB VMDKs Excluded</button>
+      <button id="s3btn" onclick="setScen(3)">Scenario 3 &mdash; NAS Cloud Direct</button>
+    </div>
+  </div>
+  <div class="dvdr"></div>
+  <div class="ctrl-grp">
+    <span class="ctrl-lbl">Replication</span>
+    <label class="sw"><input type="checkbox" id="rTog" onchange="render()"><span class="sl"></span></label>
+    <span class="ctrl-lbl" id="rLbl">Off</span>
+  </div>
+  <div class="dvdr"></div>
+  <div class="ctrl-grp">
+    <span class="ctrl-lbl">Year</span>
+    <select id="yrSel" onchange="render()" style="font-size:12px;padding:6px 10px;background:var(--bg-primary);border:0.5px solid var(--border-med);border-radius:var(--radius-md);color:var(--text-primary);cursor:pointer">
+      <option value="0">Year 1</option><option value="1">Year 2</option><option value="2">Year 3</option><option value="3">Year 4</option><option value="4">Year 5</option>
+    </select>
+  </div>
+</div>
+
+<div class="sec-lbl first">Global settings</div>
+<div class="global-inputs">
+  <div class="g-card"><div class="g-lbl">Annual growth rate</div><div class="g-inp-wrap"><input type="number" id="g_growth" value="15" min="0" max="100" step="1" oninput="render()"><span class="unit">%</span></div></div>
+  <div class="g-card"><div class="g-lbl">Enterprise license</div><div class="g-inp-wrap"><input type="number" id="g_ent" value="24" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
+  <div class="g-card"><div class="g-lbl">Foundation license</div><div class="g-inp-wrap"><input type="number" id="g_fnd" value="37" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
+  <div class="g-card"><div class="g-lbl">Production retention</div><div class="g-inp-wrap"><input type="number" id="g_retprod" value="35" min="1" step="1" oninput="render()"><span class="unit">days</span></div></div>
+  <div class="g-card"><div class="g-lbl">Non-prod retention</div><div class="g-inp-wrap"><input type="number" id="g_retnp" value="14" min="1" step="1" oninput="render()"><span class="unit">days</span></div></div>
+  <div class="g-card"><div class="g-lbl">R760 node capacity</div><div class="g-inp-wrap"><input type="number" id="g_node" value="180" min="1" step="1" oninput="render()"><span class="unit">TB</span></div></div>
+  <div class="g-card ncd-inp"><div class="g-lbl">NAS Cloud Direct license</div><div class="g-inp-wrap"><input type="number" id="g_ncd_lic" value="12" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
+  <div class="g-card ncd-inp"><div class="g-lbl">NAS Cloud Direct data reduction</div><div class="g-inp-wrap"><input type="number" id="g_ncd_dr" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span class="unit">:1</span></div></div>
+</div>
+
+<div class="sec-lbl">Data reduction ratios &amp; daily change rates</div>
+<div class="tbl-card">
+  <table class="itbl" style="min-width:380px;width:auto">
+    <thead><tr><th style="text-align:left;min-width:180px">Workload type</th><th style="min-width:150px">Data reduction ratio</th><th style="min-width:150px">Daily change rate</th></tr></thead>
+    <tbody>
+      <tr><td><span class="wdot" style="background:#1D9E75"></span>VMs</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_vm" value="2.8" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_vm" value="2" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#EF9F27"></span>Oracle / SQL / UDB</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_db" value="3.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_db" value="5" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#378ADD"></span>NAS (Scenarios 1 &amp; 2)</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nas" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nas" value="0.1" min="0.001" max="100" step="0.01" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#7F77DD"></span>No-SQL</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nosql" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nosql" value="5" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sec-lbl">Workload source capacities by cluster (GB)</div>
+<div class="tbl-card">
+  <div class="note">Scenario 1: VMs = full input value. &nbsp;Scenario 2: VMs protected = VMs minus SQL, UDB, No-SQL. &nbsp;Scenario 3: Same as Scenario 2 plus NAS for ATL Prod &amp; SAT Prod offloaded to NAS Cloud Direct (removed from cluster). Oracle always stands alone.</div>
+  <table class="itbl"><thead><tr><th style="text-align:left;min-width:80px">Workload</th><th class="th-np">ATL Test</th><th class="th-np">SAT Test</th><th class="th-pr">ATL PCI</th><th class="th-pr">SAT PCI</th><th class="th-pr">ATL Prod</th><th class="th-pr">SAT Prod</th></tr></thead><tbody id="wlBody"></tbody></table>
+</div>
+
+<div class="sec-lbl">Existing cluster physical capacity (TB)</div>
+<div class="tbl-card">
+  <table class="itbl" style="min-width:500px"><thead><tr><th style="text-align:left;min-width:130px">Cluster</th><th class="th-np">ATL Test</th><th class="th-np">SAT Test</th><th class="th-pr">ATL PCI</th><th class="th-pr">SAT PCI</th><th class="th-pr">ATL Prod</th><th class="th-pr">SAT Prod</th></tr></thead>
+  <tbody><tr><td>Existing capacity</td><td><input type="number" id="ex_0" value="4100" min="0" step="1" oninput="render()"></td><td><input type="number" id="ex_1" value="4400" min="0" step="1" oninput="render()"></td><td><input type="number" id="ex_2" value="926" min="0" step="1" oninput="render()"></td><td><input type="number" id="ex_3" value="1200" min="0" step="1" oninput="render()"></td><td><input type="number" id="ex_4" value="11900" min="0" step="1" oninput="render()"></td><td><input type="number" id="ex_5" value="11800" min="0" step="1" oninput="render()"></td></tr></tbody></table>
+</div>
+
+<div class="sec-lbl">Storage requirement — selected year</div>
+<div class="sum-grid" id="sumBar"></div>
+<div class="cl-grid" id="clCards"></div>
+
+<div id="ncdSection" class="s3-only">
+  <div class="sec-lbl" style="border-top:none;color:#0F6E56">NAS Cloud Direct — ATL Prod &amp; SAT Prod NAS offloaded to object storage</div>
+  <div class="ncd-info" id="ncdInfo"></div>
+  <div class="cl-grid" id="ncdCards"></div>
+</div>
+
+<div class="chart-card">
+  <div class="ctitle">5-year storage growth per cluster (TB) &mdash; compounding at <span id="growthLbl">15</span>% annually</div>
+  <div class="lg" id="gLeg"></div>
+  <div style="position:relative;width:100%;height:300px"><canvas id="gChart" role="img" aria-label="5-year cluster storage growth"></canvas></div>
+</div>
+<div class="two-col">
+  <div class="chart-card"><div class="ctitle">Workload composition — selected year (TB)</div><div class="lg" id="wLeg"></div><div style="position:relative;width:100%;height:260px"><canvas id="wChart" role="img" aria-label="Workload composition per cluster"></canvas></div></div>
+  <div class="chart-card"><div class="ctitle">Local vs replicated — selected year (TB)</div><div class="lg" id="rrLeg"></div><div style="position:relative;width:100%;height:260px"><canvas id="rrChart" role="img" aria-label="Local vs replicated storage"></canvas></div></div>
+</div>
+
+<div class="sec-lbl">License consumption — selected year</div>
+<div id="licCardsWrap"></div>
+<div class="tbl-card">
+  <div class="ctitle">License consumption — 5-year projection (compounding growth applied per year)</div>
+  <table class="out-tbl"><thead><tr id="licHd"></tr></thead><tbody id="licBdy"></tbody></table>
+</div>
+
+<div class="sec-lbl">Cluster physical capacity vs requirement — selected year</div>
+<div class="cl-grid" id="capCards"></div>
+<div class="tbl-card">
+  <div class="ctitle">Additional Dell R760 nodes required (180 TB usable each) — 5-year projection</div>
+  <table class="out-tbl"><thead><tr id="nodeHd"></tr></thead><tbody id="nodeBdy"></tbody></table>
+</div>
+
+</div>
+<div class="footer">Rubrik Cluster Sizing Dashboard &middot; Source data in GB &middot; Output in TB &middot; Compounding growth: Year N = Year&nbsp;1 &times; (1+rate)^(N&minus;1) &middot; Dell R760 @ 180 TB usable per node</div>
+
+<script>
+const NAMES=['ATL Test','SAT Test','ATL PCI','SAT PCI','ATL Prod','SAT Prod'];
+const IS_PROD=[false,false,true,true,true,true];
+const NCD_IDX=[4,5];
+const WL_KEYS=['NAS','VMs','Oracle','SQL','UDB','NoSQL'];
+const WL_LABELS=['NAS','VMs','Oracle','SQL','UDB','No-SQL'];
+const WL_COLORS=['#378ADD','#1D9E75','#EF9F27','#E24B4A','#7F77DD','#D4537E'];
+const CC={'ATL Test':'#EF9F27','SAT Test':'#BA7517','ATL PCI':'#378ADD','SAT PCI':'#0C447C','ATL Prod':'#1D9E75','SAT Prod':'#085041'};
+const PAIRS=[['ATL Test','SAT Test'],['ATL PCI','SAT PCI'],['ATL Prod','SAT Prod']];
+const DEFAULTS=[[4095,546816,47246,4954,9193,0],[144730,965632,390917,39485,21792,4978],[213442,533504,1359,0,12108,0],[696690,489472,24179,0,12283,0],[352173,2248704,128993,24453,143600,0],[6864579,4724736,1080898,353663,342000,71816]];
+const EXIST_DEF=[4100,4400,926,1200,11900,11800];
+let scen=1,gC=null,wC=null,rC=null;
+
+function fmtComma(n){return n===0?'0':Math.round(n).toLocaleString('en-US');}
+function stripCommas(s){return String(s).replace(/,/g,'');}
+
+function buildWlTable(){
+  const tb=document.getElementById('wlBody');tb.innerHTML='';
+  WL_KEYS.forEach((wk,wi)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="wdot" style="background:${WL_COLORS[wi]}"></span>${WL_LABELS[wi]}</td>`;
+    NAMES.forEach((_,ni)=>{
+      const val=DEFAULTS[ni][wi];
+      const td=document.createElement('td');
+      const inp=document.createElement('input');
+      inp.type='text';
+      inp.id=`w_${ni}_${wi}`;
+      inp.value=fmtComma(val);
+      inp.style.cssText='width:96px;font-size:12px;padding:4px 7px;border:0.5px solid var(--border-med);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);text-align:right';
+      inp.addEventListener('focus',function(){this.value=stripCommas(this.value);});
+      inp.addEventListener('blur',function(){const n=parseFloat(stripCommas(this.value));this.value=isNaN(n)?'0':fmtComma(n);render();});
+      inp.addEventListener('input',function(){render();});
+      td.appendChild(inp);
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+
+function getV(id,def){
+  const el=document.getElementById(id);
+  if(!el)return def;
+  const raw=(el.type==='text')?stripCommas(el.value):el.value;
+  const v=parseFloat(raw);
+  return isNaN(v)?def:v;
+}
+
+function getRaw(){return NAMES.map((_,ni)=>{const d={prod:IS_PROD[ni]};WL_KEYS.forEach((wk,wi)=>{d[wk]=getV(`w_${ni}_${wi}`,DEFAULTS[ni][wi]);});return d;});}
+
+function peerIdx(ni){for(const p of PAIRS){const a=NAMES.indexOf(p[0]),b=NAMES.indexOf(p[1]);if(a===ni)return b;if(b===ni)return a;}return -1;}
+
+function calcLocal(d,ni,DR,CR,ret){
+  const fb=(r,dr)=>r/dr;
+  // Incremental backup: source * change_rate / DR * days  (data reduction applied)
+  const inc=(r,dr,cr,dy)=>(r*cr/dr)*dy;
+  // Transaction logs: source * change_rate * days  (same change rate, NO data reduction)
+  const lg=(r,cr,dy)=>r*cr*dy;
+  const vmGB=(scen===1)?d.VMs:Math.max(0,d.VMs-d.SQL-d.UDB-d.NoSQL);
+  const nasGB=(scen===3&&NCD_IDX.includes(ni))?0:d.NAS;
+  return{
+    nas:    fb(nasGB,   DR.NAS)  +inc(nasGB,   DR.NAS,   CR.NAS,   ret),
+    vms:    fb(vmGB,    DR.VM)   +inc(vmGB,     DR.VM,    CR.VM,    ret),
+    oracle: fb(d.Oracle,DR.DB)   +inc(d.Oracle, DR.DB,    CR.DB,    ret)+lg(d.Oracle,CR.DB,ret),
+    sql:    fb(d.SQL,   DR.DB)   +inc(d.SQL,    DR.DB,    CR.DB,    ret)+lg(d.SQL,   CR.DB,ret),
+    udb:    fb(d.UDB,   DR.DB)   +inc(d.UDB,    DR.DB,    CR.DB,    ret)+lg(d.UDB,   CR.DB,ret),
+    nosql:  fb(d.NoSQL, DR.NoSQL)+inc(d.NoSQL,  DR.NoSQL, CR.NoSQL, ret)+lg(d.NoSQL, CR.NoSQL,ret),
+  };
+}
+
+const RESERVE=0.02; // 2% reserve capacity for healthy headroom, code upgrades & maintenance
+
+function calcCluster(ni,repl,RAW,DR,CR,retProd,retNP){
+  const d=RAW[ni],ret=d.prod?retProd:retNP,l=calcLocal(d,ni,DR,CR,ret);
+  const lt=l.nas+l.vms+l.oracle+l.sql+l.udb+l.nosql;
+  let rt=0;
+  if(repl){const pi=peerIdx(ni);if(pi>=0){const pd=RAW[pi],pret=pd.prod?retProd:retNP,pl=calcLocal(pd,pi,DR,CR,pret);rt=pl.nas+pl.vms+pl.oracle+pl.sql+pl.udb+pl.nosql;}}
+  const total=lt+rt;
+  const reserve=total*RESERVE;
+  return{...l,localGB:lt,replGB:rt,dataGB:total,reserveGB:reserve,totalGB:total+reserve};
+}
+
+const toTB=gb=>gb/1024;
+const fTB=(gb,d=1)=>(gb/1024).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fGB=gb=>Math.round(gb).toLocaleString('en-US');
+const fPct=p=>p.toFixed(1)+'%';
+const bClr=p=>p>=100?'#E24B4A':p>=85?'#EF9F27':'#1D9E75';
+const sCls=p=>p>=100?'s-over':p>=85?'s-warn':'s-ok';
+const sTxt=(p,g)=>p>=100?`Overage: ${Math.abs(g).toLocaleString('en-US',{maximumFractionDigits:0})} TB`:`${g.toLocaleString('en-US',{maximumFractionDigits:0})} TB remaining`;
+const lCls=p=>p>=100?'over':p>=85?'warn':'ok';
+const nCls=n=>n===0?'zero':n<=5?'some':'many';
+const ncdLCls=p=>p>=100?'nover':p>=85?'nwarn':'nok';
+const nodesN=(req,ex,nTB)=>req>ex?Math.ceil((req-ex)/nTB):0;
+
+function setScen(s){scen=s;['s1btn','s2btn','s3btn'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i+1===s));render();}
+
+function render(){
+  const repl=document.getElementById('rTog').checked;
+  document.getElementById('rLbl').textContent=repl?'On':'Off';
+  const yi=parseInt(document.getElementById('yrSel').value);
+  const gr=getV('g_growth',15)/100;
+  // Year 1 = index 0 = factor 1.0 (no growth yet)
+  // Year 2 = index 1 = factor (1+gr)^1
+  // Year N = index N-1 = factor (1+gr)^(N-1)
+  const g=Math.pow(1+gr,yi);
+  document.getElementById('growthLbl').textContent=getV('g_growth',15);
+
+  const ENT=getV('g_ent',24)*1024,FND=getV('g_fnd',37)*1024,NCD=getV('g_ncd_lic',12)*1024;
+  const DR_NCD=getV('g_ncd_dr',1.3),NODE_TB=getV('g_node',180);
+  const retProd=getV('g_retprod',35),retNP=getV('g_retnp',14);
+  const RAW=getRaw();
+  const DR={VM:getV('dr_vm',2.8),DB:getV('dr_db',3.0),NAS:getV('dr_nas',1.3),NoSQL:getV('dr_nosql',1.3)};
+  const CR={VM:getV('cr_vm',2)/100,DB:getV('cr_db',5)/100,NAS:getV('cr_nas',0.1)/100,NoSQL:getV('cr_nosql',5)/100};
+  const EXIST=NAMES.map((_,i)=>getV(`ex_${i}`,EXIST_DEF[i]));
+  const yrs=[0,1,2,3,4];
+  const allR=NAMES.map((_,ni)=>calcCluster(ni,repl,RAW,DR,CR,retProd,retNP));
+  const grand=allR.reduce((s,r)=>s+r.totalGB*g,0);
+  const prod=allR.reduce((s,r,i)=>s+(IS_PROD[i]?r.totalGB*g:0),0);
+  const np=allR.reduce((s,r,i)=>s+(!IS_PROD[i]?r.totalGB*g:0),0);
+  const replGB=allR.reduce((s,r)=>s+r.replGB*g,0);
+  const locGB=allR.reduce((s,r)=>s+r.localGB*g,0);
+  const gdStr=yi===0?'Baseline':`+${((g-1)*100).toFixed(1)}% vs Yr 1`;
+
+  document.getElementById('sumBar').innerHTML=`
+    <div class="sum-card"><div class="sum-lbl">Total all clusters</div><div class="sum-val">${fTB(grand)} TB</div><div class="sum-sub">${fGB(grand)} GB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Production clusters</div><div class="sum-val">${fTB(prod)} TB</div><div class="sum-sub">${fGB(prod)} GB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Non-production clusters</div><div class="sum-val">${fTB(np)} TB</div><div class="sum-sub">${fGB(np)} GB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Replication overhead</div><div class="sum-val">${repl?fTB(replGB)+' TB':'—'}</div><div class="sum-sub">${repl?fGB(replGB)+' GB':'Off'}</div></div>
+    <div class="sum-card"><div class="sum-lbl">Year shown</div><div class="sum-val">Year ${yi+1}</div><div class="sum-sub">${gdStr}</div></div>
+  `;
+
+  const cc=document.getElementById('clCards');cc.innerHTML='';
+  NAMES.forEach((n,ni)=>{
+    const r=allR[ni],d=RAW[ni],pi=peerIdx(ni),pName=pi>=0?NAMES[pi]:null;
+    const isNcd=(scen===3&&NCD_IDX.includes(ni));
+    const el=document.createElement('div');el.className='cl-card '+(d.prod?'prod':'nonprod');
+    const vmLbl=(scen===1)?'VMs':'VMs (excl. SQL/UDB/No-SQL)';
+    el.innerHTML=`
+      <div class="cl-name">${n}</div>
+      <div class="cl-meta">${d.prod?'Production':'Non-production'} &middot; ${d.prod?retProd:retNP}-day retention${isNcd?' &middot; NAS &rarr; NCD':''}</div>
+      <div class="cl-tot">${fTB(r.totalGB*g)} TB</div>
+      <div class="cl-unit">${fGB(r.totalGB*g)} GB total required</div>
+      <div class="bkdn">
+        ${isNcd?`<div class="brow ncd"><span>NAS &rarr; NAS Cloud Direct</span><span class="v">${fTB(d.NAS*g)} TB src</span></div>`:`<div class="brow"><span>NAS</span><span class="v">${fTB(r.nas*g)} TB</span></div>`}
+        <div class="brow"><span>${vmLbl}</span><span class="v">${fTB(r.vms*g)} TB</span></div>
+        <div class="brow"><span>Oracle</span><span class="v">${fTB(r.oracle*g)} TB</span></div>
+        ${d.SQL>0?`<div class="brow"><span>SQL</span><span class="v">${fTB(r.sql*g)} TB</span></div>`:''}
+        ${d.UDB>0?`<div class="brow"><span>UDB</span><span class="v">${fTB(r.udb*g)} TB</span></div>`:''}
+        ${d.NoSQL>0?`<div class="brow"><span>No-SQL</span><span class="v">${fTB(r.nosql*g)} TB</span></div>`:''}
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Local subtotal</span><span class="v">${fTB(r.localGB*g)} TB</span></div>
+        ${repl&&r.replGB>0?`<div class="brow rr"><span>+ Repl. from ${pName}</span><span class="v">${fTB(r.replGB*g)} TB</span></div>`:''}
+        <div class="brow" style="color:var(--warn-text)"><span>+ 2% reserve capacity</span><span class="v">${fTB(r.reserveGB*g)} TB</span></div>
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light);font-weight:500"><span style="color:var(--text-primary)">Total required</span><span class="v" style="color:var(--text-primary)">${fTB(r.totalGB*g)} TB</span></div>
+      </div>
+      ${repl&&pName?`<div class="rpill">&#8596; ${pName}</div>`:''}
+      ${isNcd?`<div class="ncd-pill">NAS &rarr; Object Storage (RCV)</div>`:''}
+    `;
+    cc.appendChild(el);
+  });
+
+  // Scenario 3 NCD section
+  const ncdSec=document.getElementById('ncdSection');
+  const atlNAS=RAW[4].NAS,satNAS=RAW[5].NAS;
+  const ncdUsed=toTB((atlNAS+satNAS)*g),ncdPct=(ncdUsed/NCD)*100,ncdGap=NCD-ncdUsed;
+  if(scen===3){
+    ncdSec.classList.add('show');
+    document.getElementById('ncdInfo').innerHTML=`<strong>ATL Prod NAS:</strong> ${fTB(atlNAS)} TB source &rarr; ${fTB(atlNAS*g)} TB Year ${yi+1}. &nbsp;<strong>SAT Prod NAS:</strong> ${fTB(satNAS)} TB source &rarr; ${fTB(satNAS*g)} TB Year ${yi+1}. &nbsp;Combined NCD source: <strong>${fTB((atlNAS+satNAS)*g)} TB</strong>, using <strong>${fPct(ncdPct)}</strong> of ${getV('g_ncd_lic',12)} PB license. ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'}. NCD license measured by source data size protected. Estimated stored in object storage after ${DR_NCD}:1 reduction: <strong>${fTB((atlNAS+satNAS)*g/DR_NCD)} TB</strong>.`;
+    const nc=document.getElementById('ncdCards');nc.innerHTML='';
+    const totalNcdSrcGB=(atlNAS+satNAS)*g;
+    const totalNcdStoredGB=totalNcdSrcGB/DR_NCD;
+    const el=document.createElement('div');el.className='cl-card ncd-style';
+    el.innerHTML=`
+      <div class="cl-name">Combined NAS Cloud Direct &mdash; Object Storage (RCV)</div>
+      <div class="cl-meta">ATL Prod + SAT Prod &middot; 1 full + incremental forever</div>
+      <div class="cl-tot">${fTB(totalNcdStoredGB)} TB</div>
+      <div class="cl-unit">Estimated total stored in object storage</div>
+      <div class="bkdn">
+        <div class="brow"><span>ATL Prod NAS source (Year 1)</span><span class="v">${fTB(atlNAS)} TB</span></div>
+        <div class="brow"><span>SAT Prod NAS source (Year 1)</span><span class="v">${fTB(satNAS)} TB</span></div>
+        <div class="brow"><span>Combined source Year ${yi+1}</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
+        <div class="brow"><span>NCD data reduction</span><span class="v">${DR_NCD}:1</span></div>
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)">
+          <span>Total stored in object storage</span><span class="v">${fTB(totalNcdStoredGB)} TB</span>
+        </div>
+        <div class="brow" style="color:#0F6E56"><span>NCD license consumed (source size)</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
+      </div>
+      <div class="ncd-pill">NAS Cloud Direct &mdash; Object Storage (RCV)</div>
+    `;
+    nc.appendChild(el);
+  } else { ncdSec.classList.remove('show'); }
+
+  // Charts
+  document.getElementById('gLeg').innerHTML=NAMES.map(n=>`<span><span class="ldot" style="background:${CC[n]}"></span>${n}</span>`).join('');
+  if(gC)gC.destroy();
+  gC=new Chart(document.getElementById('gChart'),{type:'line',data:{labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],datasets:NAMES.map((n,ni)=>({label:n,data:yrs.map(y=>parseFloat(toTB(calcCluster(ni,repl,RAW,DR,CR,retProd,retNP).totalGB*Math.pow(1+gr,y)).toFixed(1))),borderColor:CC[n],backgroundColor:CC[n]+'22',borderWidth:2,pointRadius:4,tension:0.3,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'},title:{display:true,text:'TB',font:{size:11}}}}}});
+
+  document.getElementById('wLeg').innerHTML=WL_LABELS.map((w,i)=>`<span><span class="ldot" style="background:${WL_COLORS[i]}"></span>${w}</span>`).join('');
+  if(wC)wC.destroy();
+  wC=new Chart(document.getElementById('wChart'),{type:'bar',data:{labels:NAMES,datasets:['nas','vms','oracle','sql','udb','nosql'].map((k,i)=>({label:WL_LABELS[i],data:allR.map(r=>parseFloat(toTB(r[k]*g).toFixed(1))),backgroundColor:WL_COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11},maxRotation:30}},y:{stacked:true,grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'}}}}});
+
+  document.getElementById('rrLeg').innerHTML=`<span><span class="ldot" style="background:#378ADD"></span>Local</span><span><span class="ldot" style="background:#85B7EB"></span>Replicated</span>`;
+  if(rC)rC.destroy();
+  rC=new Chart(document.getElementById('rrChart'),{type:'bar',data:{labels:NAMES,datasets:[{label:'Local',data:allR.map(r=>parseFloat(toTB(r.localGB*g).toFixed(1))),backgroundColor:'#378ADD'},{label:'Replicated',data:allR.map(r=>parseFloat(toTB(r.replGB*g).toFixed(1))),backgroundColor:'#85B7EB'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11},maxRotation:30}},y:{stacked:true,grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'}}}}});
+
+  const entU=toTB(locGB),fndU=repl?toTB(replGB):0;
+  const eP=(entU/ENT)*100,fP=(fndU/FND)*100,nP=(ncdUsed/NCD)*100;
+  const eG=ENT-entU,fG=FND-fndU,nG=NCD-ncdUsed;
+
+  function licCard(title,sub,licTB,licPB,usedTB,pct,gap,extraClass=''){
+    return`<div class="lic-card ${extraClass}"><div class="lic-title"${extraClass?` style="color:#085041"`:''}>${title}</div><div class="lic-sub">${sub}</div><div class="lrow"><span class="ll">Licensed</span><span class="lv">${licTB.toLocaleString('en-US')} TB (${licPB} PB)</span></div><div class="lrow"><span class="ll">Required — Year ${yi+1}</span><span class="lv">${usedTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,pct).toFixed(1)}%;background:${bClr(pct)}"></div></div><div class="lrow"><span class="ll">Utilization</span><span class="lv" style="color:${bClr(pct)}">${fPct(pct)}</span></div><div class="lrow"><span class="ll">${gap>=0?'Remaining':'Overage'}</span><span class="lv" style="color:${bClr(pct)}">${gap>=0?'+':''}${Math.abs(gap).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div><span class="spill ${sCls(pct)}">${sTxt(pct,gap)}</span></div>`;
+  }
+
+  const lw=document.getElementById('licCardsWrap');
+  const entHtml=licCard('Enterprise edition',`Local source data${scen===3?' — NAS removed from ATL/SAT Prod':' — all clusters'}`,ENT,getV('g_ent',24),entU,eP,eG);
+  const fndHtml=licCard('Foundation edition',`Replicated copy storage${repl?'':' — replication off'}`,FND,getV('g_fnd',37),fndU,fP,fG);
+  const ncdHtml=licCard('NAS Cloud Direct','ATL Prod + SAT Prod NAS &rarr; Object Storage (RCV). Licensed by source data size.',NCD,getV('g_ncd_lic',12),ncdUsed,nP,nG,'ncd-bdr');
+  lw.innerHTML=scen===3?`<div class="three-col">${entHtml}${fndHtml}${ncdHtml}</div>`:`<div class="two-col">${entHtml}${fndHtml}</div>`;
+
+  document.getElementById('licHd').innerHTML=`<th>License metric</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
+  const licYr=yrs.map(y=>{
+    const gy=Math.pow(1+gr,y); // Year1=1.0, Year2=(1+gr)^1, ...
+    const loc=allR.reduce((s,r)=>s+r.localGB*gy,0),rep=repl?allR.reduce((s,r)=>s+r.replGB*gy,0):0;
+    const eu=toTB(loc),fu=toTB(rep),nu=toTB((atlNAS+satNAS)*gy);
+    return{eu,fu,nu,ep:(eu/ENT)*100,fp:(fu/FND)*100,np:(nu/NCD)*100,eg:ENT-eu,fg:FND-fu,ng:NCD-nu};
+  });
+  let rows=`
+    <tr><td style="font-weight:500;color:var(--text-primary)">Enterprise — used (TB)</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${r.eu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td>Enterprise — utilization</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${fPct(r.ep)}</td>`).join('')}</tr>
+    <tr><td>Enterprise — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${r.eg>=0?'+':''}${Math.abs(r.eg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+    <tr class="sp"><td colspan="6"></td></tr>
+    <tr><td style="font-weight:500;color:var(--text-primary)">Foundation — used (TB)</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${r.fu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td>Foundation — utilization</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${fPct(r.fp)}</td>`).join('')}</tr>
+    <tr><td>Foundation — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${r.fg>=0?'+':''}${Math.abs(r.fg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+  `;
+  if(scen===3) rows+=`
+    <tr class="sp"><td colspan="6"></td></tr>
+    <tr><td style="font-weight:500;color:#085041">NAS Cloud Direct — source data (TB)</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${r.nu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td style="color:#0F6E56">NAS Cloud Direct — utilization of ${getV('g_ncd_lic',12)} PB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${fPct(r.np)}</td>`).join('')}</tr>
+    <tr><td style="color:#0F6E56">NAS Cloud Direct — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${r.ng>=0?'+':''}${Math.abs(r.ng).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+  `;
+  document.getElementById('licBdy').innerHTML=rows;
+
+  const cap=document.getElementById('capCards');cap.innerHTML='';
+  NAMES.forEach((n,ni)=>{
+    const r=allR[ni];
+    const dataTB=toTB(r.dataGB*g);       // data only (pre-reserve)
+    const reserveTB=toTB(r.reserveGB*g);  // 2% reserve
+    const reqTB=toTB(r.totalGB*g);        // data + reserve
+    const exTB=EXIST[ni],nd=nodesN(reqTB,exTB,NODE_TB),addTB=nd*NODE_TB,newTot=exTB+addTB;
+    const up=(reqTB/exTB)*100,clr=bClr(up),d=RAW[ni];
+    const spareTB=Math.max(0,exTB-reqTB),spareNodes=Math.floor(spareTB/NODE_TB);
+    const el=document.createElement('div');el.className='cl-card '+(d.prod?'prod':'nonprod');
+    el.innerHTML=`
+      <div class="cl-name">${n}</div>
+      <div class="cl-meta">Existing capacity: ${exTB.toLocaleString('en-US')} TB</div>
+      <div class="lrow"><span class="ll">Data + replication</span><span class="lv">${dataTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="lrow" style="color:var(--warn-text)"><span class="ll">+ 2% reserve capacity</span><span class="lv">${reserveTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="lrow" style="font-weight:500"><span class="ll">Total required — Year ${yi+1}</span><span class="lv">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,up).toFixed(1)}%;background:${clr}"></div></div>
+      <div class="lrow"><span class="ll">Utilization of existing</span><span class="lv" style="color:${clr}">${fPct(up)}</span></div>
+      <div class="lrow"><span class="ll">${reqTB>exTB?'Gap':'Headroom'}</span><span class="lv" style="color:${clr}">${Math.abs(exTB-reqTB).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
+      <div style="font-size:26px;font-weight:500;margin-top:10px;color:${nd===0?'#3B6D11':nd<=5?'#BA7517':'#A32D2D'}">${nd===0?spareNodes:nd}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nd===0?`R760 node${spareNodes===1?'':'s'} of spare capacity`:`additional R760 node${nd===1?'':'s'} needed`}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">${nd>0?`+${addTB.toLocaleString('en-US')} TB → new total ${newTot.toLocaleString('en-US')} TB`:`${spareTB.toLocaleString('en-US',{maximumFractionDigits:0})} TB headroom available`}</div>
+    `;
+    cap.appendChild(el);
+  });
+
+  document.getElementById('nodeHd').innerHTML=`<th>Cluster (existing TB)</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
+  document.getElementById('nodeBdy').innerHTML=NAMES.map((n,ni)=>{
+    const exTB=EXIST[ni];
+    return`<tr><td>${n} <span style="color:var(--text-secondary)">(${exTB.toLocaleString('en-US')} TB)</span></td>${yrs.map(y=>{const gy=Math.pow(1+gr,y),req=toTB(calcCluster(ni,repl,RAW,DR,CR,retProd,retNP).totalGB*gy),nd=nodesN(req,exTB,NODE_TB);return`<td class="${nCls(nd)}">${nd===0?'&mdash;':'+'+nd+' node'+(nd===1?'':'s')}</td>`;}).join('')}</tr>`;
+  }).join('');
+}
+
+buildWlTable();
+// Default state: Scenario 2, replication on, Year 5
+scen=2;
+document.getElementById('s1btn').classList.remove('on');
+document.getElementById('s2btn').classList.add('on');
+document.getElementById('rTog').checked=true;
+document.getElementById('yrSel').value='4';
+render();
+</script>
+</body>
+</html>
