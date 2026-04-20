@@ -263,12 +263,16 @@ function calcLocal(d,ni,DR,CR,ret){
   };
 }
 
+const RESERVE=0.02; // 2% reserve capacity for healthy headroom, code upgrades & maintenance
+
 function calcCluster(ni,repl,RAW,DR,CR,retProd,retNP){
   const d=RAW[ni],ret=d.prod?retProd:retNP,l=calcLocal(d,ni,DR,CR,ret);
   const lt=l.nas+l.vms+l.oracle+l.sql+l.udb+l.nosql;
   let rt=0;
   if(repl){const pi=peerIdx(ni);if(pi>=0){const pd=RAW[pi],pret=pd.prod?retProd:retNP,pl=calcLocal(pd,pi,DR,CR,pret);rt=pl.nas+pl.vms+pl.oracle+pl.sql+pl.udb+pl.nosql;}}
-  return{...l,localGB:lt,replGB:rt,totalGB:lt+rt};
+  const total=lt+rt;
+  const reserve=total*RESERVE;
+  return{...l,localGB:lt,replGB:rt,dataGB:total,reserveGB:reserve,totalGB:total+reserve};
 }
 
 const toTB=gb=>gb/1024;
@@ -340,6 +344,8 @@ function render(){
         ${d.NoSQL>0?`<div class="brow"><span>No-SQL</span><span class="v">${fTB(r.nosql*g)} TB</span></div>`:''}
         <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Local subtotal</span><span class="v">${fTB(r.localGB*g)} TB</span></div>
         ${repl&&r.replGB>0?`<div class="brow rr"><span>+ Repl. from ${pName}</span><span class="v">${fTB(r.replGB*g)} TB</span></div>`:''}
+        <div class="brow" style="color:var(--warn-text)"><span>+ 2% reserve capacity</span><span class="v">${fTB(r.reserveGB*g)} TB</span></div>
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light);font-weight:500"><span style="color:var(--text-primary)">Total required</span><span class="v" style="color:var(--text-primary)">${fTB(r.totalGB*g)} TB</span></div>
       </div>
       ${repl&&pName?`<div class="rpill">&#8596; ${pName}</div>`:''}
       ${isNcd?`<div class="ncd-pill">NAS &rarr; Object Storage (RCV)</div>`:''}
@@ -355,11 +361,27 @@ function render(){
     ncdSec.classList.add('show');
     document.getElementById('ncdInfo').innerHTML=`<strong>ATL Prod NAS:</strong> ${fTB(atlNAS)} TB source &rarr; ${fTB(atlNAS*g)} TB Year ${yi+1}. &nbsp;<strong>SAT Prod NAS:</strong> ${fTB(satNAS)} TB source &rarr; ${fTB(satNAS*g)} TB Year ${yi+1}. &nbsp;Combined NCD source: <strong>${fTB((atlNAS+satNAS)*g)} TB</strong>, using <strong>${fPct(ncdPct)}</strong> of ${getV('g_ncd_lic',12)} PB license. ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'}. NCD license measured by source data size protected. Estimated stored in object storage after ${DR_NCD}:1 reduction: <strong>${fTB((atlNAS+satNAS)*g/DR_NCD)} TB</strong>.`;
     const nc=document.getElementById('ncdCards');nc.innerHTML='';
-    [[4,'ATL Prod',atlNAS],[5,'SAT Prod',satNAS]].forEach(([,cname,srcGB])=>{
-      const el=document.createElement('div');el.className='cl-card ncd-style';
-      el.innerHTML=`<div class="cl-name">${cname} &mdash; NAS Cloud Direct</div><div class="cl-meta">Object Storage (RCV) &middot; 1 full + incremental forever</div><div class="cl-tot">${fTB(srcGB*g)} TB</div><div class="cl-unit">NCD source data (license basis)</div><div class="bkdn"><div class="brow"><span>Base source (Year 1)</span><span class="v">${fTB(srcGB)} TB</span></div><div class="brow"><span>Year ${yi+1} (compounded)</span><span class="v">${fTB(srcGB*g)} TB</span></div><div class="brow"><span>Data reduction</span><span class="v">${DR_NCD}:1</span></div><div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Est. stored in object storage</span><span class="v">${fTB(srcGB*g/DR_NCD)} TB</span></div></div><div class="ncd-pill">NAS Cloud Direct</div>`;
-      nc.appendChild(el);
-    });
+    const totalNcdSrcGB=(atlNAS+satNAS)*g;
+    const totalNcdStoredGB=totalNcdSrcGB/DR_NCD;
+    const el=document.createElement('div');el.className='cl-card ncd-style';
+    el.innerHTML=`
+      <div class="cl-name">Combined NAS Cloud Direct &mdash; Object Storage (RCV)</div>
+      <div class="cl-meta">ATL Prod + SAT Prod &middot; 1 full + incremental forever</div>
+      <div class="cl-tot">${fTB(totalNcdStoredGB)} TB</div>
+      <div class="cl-unit">Estimated total stored in object storage</div>
+      <div class="bkdn">
+        <div class="brow"><span>ATL Prod NAS source (Year 1)</span><span class="v">${fTB(atlNAS)} TB</span></div>
+        <div class="brow"><span>SAT Prod NAS source (Year 1)</span><span class="v">${fTB(satNAS)} TB</span></div>
+        <div class="brow"><span>Combined source Year ${yi+1}</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
+        <div class="brow"><span>NCD data reduction</span><span class="v">${DR_NCD}:1</span></div>
+        <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)">
+          <span>Total stored in object storage</span><span class="v">${fTB(totalNcdStoredGB)} TB</span>
+        </div>
+        <div class="brow" style="color:#0F6E56"><span>NCD license consumed (source size)</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
+      </div>
+      <div class="ncd-pill">NAS Cloud Direct &mdash; Object Storage (RCV)</div>
+    `;
+    nc.appendChild(el);
   } else { ncdSec.classList.remove('show'); }
 
   // Charts
@@ -415,11 +437,27 @@ function render(){
 
   const cap=document.getElementById('capCards');cap.innerHTML='';
   NAMES.forEach((n,ni)=>{
-    const r=allR[ni],reqTB=toTB(r.totalGB*g),exTB=EXIST[ni],nd=nodesN(reqTB,exTB,NODE_TB),addTB=nd*NODE_TB,newTot=exTB+addTB;
+    const r=allR[ni];
+    const dataTB=toTB(r.dataGB*g);       // data only (pre-reserve)
+    const reserveTB=toTB(r.reserveGB*g);  // 2% reserve
+    const reqTB=toTB(r.totalGB*g);        // data + reserve
+    const exTB=EXIST[ni],nd=nodesN(reqTB,exTB,NODE_TB),addTB=nd*NODE_TB,newTot=exTB+addTB;
     const up=(reqTB/exTB)*100,clr=bClr(up),d=RAW[ni];
     const spareTB=Math.max(0,exTB-reqTB),spareNodes=Math.floor(spareTB/NODE_TB);
     const el=document.createElement('div');el.className='cl-card '+(d.prod?'prod':'nonprod');
-    el.innerHTML=`<div class="cl-name">${n}</div><div class="cl-meta">Existing: ${exTB.toLocaleString('en-US')} TB</div><div class="lrow"><span class="ll">Required — Year ${yi+1}</span><span class="lv">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,up).toFixed(1)}%;background:${clr}"></div></div><div class="lrow"><span class="ll">Utilization of existing</span><span class="lv" style="color:${clr}">${fPct(up)}</span></div><div class="lrow"><span class="ll">${reqTB>exTB?'Gap':'Headroom'}</span><span class="lv" style="color:${clr}">${Math.abs(exTB-reqTB).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div><div style="font-size:28px;font-weight:500;margin-top:10px;color:${nd===0?'#3B6D11':nd<=5?'#BA7517':'#A32D2D'}">${nd===0?spareNodes:nd}</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nd===0?`R760 node${spareNodes===1?'':'s'} of spare capacity`:`additional R760 node${nd===1?'':'s'} needed`}</div><div style="font-size:11px;color:var(--text-secondary);margin-top:4px">${nd>0?`+${addTB.toLocaleString('en-US')} TB → new total ${newTot.toLocaleString('en-US')} TB`:`${spareTB.toLocaleString('en-US',{maximumFractionDigits:0})} TB headroom available`}</div>`;
+    el.innerHTML=`
+      <div class="cl-name">${n}</div>
+      <div class="cl-meta">Existing capacity: ${exTB.toLocaleString('en-US')} TB</div>
+      <div class="lrow"><span class="ll">Data + replication</span><span class="lv">${dataTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="lrow" style="color:var(--warn-text)"><span class="ll">+ 2% reserve capacity</span><span class="lv">${reserveTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="lrow" style="font-weight:500"><span class="ll">Total required — Year ${yi+1}</span><span class="lv">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,up).toFixed(1)}%;background:${clr}"></div></div>
+      <div class="lrow"><span class="ll">Utilization of existing</span><span class="lv" style="color:${clr}">${fPct(up)}</span></div>
+      <div class="lrow"><span class="ll">${reqTB>exTB?'Gap':'Headroom'}</span><span class="lv" style="color:${clr}">${Math.abs(exTB-reqTB).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
+      <div style="font-size:26px;font-weight:500;margin-top:10px;color:${nd===0?'#3B6D11':nd<=5?'#BA7517':'#A32D2D'}">${nd===0?spareNodes:nd}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nd===0?`R760 node${spareNodes===1?'':'s'} of spare capacity`:`additional R760 node${nd===1?'':'s'} needed`}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">${nd>0?`+${addTB.toLocaleString('en-US')} TB → new total ${newTot.toLocaleString('en-US')} TB`:`${spareTB.toLocaleString('en-US',{maximumFractionDigits:0})} TB headroom available`}</div>
+    `;
     cap.appendChild(el);
   });
 
