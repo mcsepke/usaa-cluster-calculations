@@ -20,7 +20,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ctrl-grp{display:flex;align-items:center;gap:8px}.ctrl-lbl{font-size:12px;color:var(--text-secondary);white-space:nowrap}
 .tog{display:flex;border:0.5px solid var(--border-med);border-radius:var(--radius-md);overflow:hidden}
 .tog button{padding:6px 14px;font-size:12px;background:transparent;border:none;cursor:pointer;color:var(--text-secondary);transition:background .15s,color .15s;white-space:nowrap}
-.tog button.on{background:var(--info-bg);color:var(--info-text);font-weight:500}
+.tog button.on{background:#FEF08A;color:#713F12;font-weight:500;border-right:1px solid #CA8A04}
 .sw{position:relative;width:38px;height:22px;flex-shrink:0}.sw input{opacity:0;width:0;height:0}
 .sl{position:absolute;inset:0;background:var(--border-med);border-radius:22px;cursor:pointer;transition:background .2s}
 .sl:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
@@ -99,23 +99,44 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 .lib-lbl{font-size:10px;color:var(--text-secondary);margin-bottom:2px}
 .lib-val{font-size:16px;font-weight:500;color:var(--text-primary)}
 .lib-sub{font-size:10px;color:var(--text-secondary);margin-top:1px}
+.scen-desc-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.scen-desc{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.65rem .9rem;transition:border-color .15s,background .15s}
+.scen-desc.active{border-color:#CA8A04;background:#FEF9C3}
+.scen-desc-num{font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:3px}
+.scen-desc.active .scen-desc-num{color:#713F12;font-weight:500}
+.scen-desc-txt{font-size:11px;color:var(--text-secondary);line-height:1.5}
+.scen-desc.active .scen-desc-txt{color:#713F12}
 .footer{text-align:center;font-size:11px;color:var(--text-secondary);padding:2rem;border-top:0.5px solid var(--border-light);margin-top:1rem}
+.save-bar{display:flex;align-items:center;gap:10px;background:#FEF9C3;border:0.5px solid #CA8A04;border-radius:var(--radius-md);padding:.5rem 1rem;margin-bottom:1.25rem;font-size:11px;color:#713F12}
+.save-bar button{font-size:11px;padding:4px 12px;border-radius:var(--radius-md);cursor:pointer;font-weight:500;border:0.5px solid #CA8A04;background:#FEF08A;color:#713F12}
+.save-bar button.reset-btn{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-text)}
+.save-bar .save-status{margin-left:auto;font-size:10px;color:#854F0B;font-style:italic}
+.header-logo{height:36px;width:auto}
 </style>
 </head>
 <body>
 <div class="header">
-  <div><div class="header-title">Rubrik Cluster Sizing Dashboard</div><div class="header-sub">All inputs editable &middot; Changes recalculate instantly &middot; Growth compounds annually</div></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <img src="data:image/png;base64,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" class="header-logo" alt="USAA logo">
+    <div><div class="header-title">Rubrik Cluster Sizing Dashboard</div><div class="header-sub">All inputs editable &middot; Changes recalculate instantly &middot; Growth compounds annually</div></div>
+  </div>
   <span class="rubrik-badge">RUBRIK</span>
 </div>
 <div class="main">
+
+<div class="save-bar">
+  <button onclick="saveSettings()">&#128190; Save settings</button>
+  <button class="reset-btn" onclick="resetSettings()">&#8635; Reset to defaults</button>
+  <span class="save-status" id="saveStatus"></span>
+</div>
 
 <div class="ctrl-bar">
   <div class="ctrl-grp">
     <span class="ctrl-lbl">Scenario</span>
     <div class="tog">
-      <button class="on" id="s1btn" onclick="setScen(1)">Scenario 1 &mdash; Full VM Backups Included</button>
-      <button id="s2btn" onclick="setScen(2)">Scenario 2 &mdash; DB VMDKs Excluded</button>
-      <button id="s3btn" onclick="setScen(3)">Scenario 3 &mdash; NAS Cloud Direct</button>
+      <button class="on" id="s1btn" onclick="setScen(1)">Scenario 1</button>
+      <button id="s2btn" onclick="setScen(2)">Scenario 2</button>
+      <button id="s3btn" onclick="setScen(3)">Scenario 3</button>
     </div>
   </div>
   <div class="dvdr"></div>
@@ -127,9 +148,24 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
   <div class="dvdr"></div>
   <div class="ctrl-grp">
     <span class="ctrl-lbl">Year</span>
-    <select id="yrSel" onchange="render()" style="font-size:12px;padding:6px 10px;background:var(--bg-primary);border:0.5px solid var(--border-med);border-radius:var(--radius-md);color:var(--text-primary);cursor:pointer">
+    <select id="yrSel" onchange="render()" style="font-size:12px;padding:6px 10px;background:#FEF08A;border:0.5px solid #CA8A04;border-radius:var(--radius-md);color:#713F12;cursor:pointer;font-weight:500">
       <option value="0">Year 1</option><option value="1">Year 2</option><option value="2">Year 3</option><option value="3">Year 4</option><option value="4">Year 5</option>
     </select>
+  </div>
+</div>
+
+<div class="scen-desc-bar">
+  <div class="scen-desc" id="sd1" onclick="setScen(1)" style="cursor:pointer">
+    <div class="scen-desc-num">Scenario 1</div>
+    <div class="scen-desc-txt">Full VM image backup including DB data. NAS backups on Rubrik Clusters.</div>
+  </div>
+  <div class="scen-desc" id="sd2" onclick="setScen(2)" style="cursor:pointer">
+    <div class="scen-desc-num">Scenario 2</div>
+    <div class="scen-desc-txt">VM backup excludes DB data. NAS backups on Rubrik Clusters.</div>
+  </div>
+  <div class="scen-desc" id="sd3" onclick="setScen(3)" style="cursor:pointer">
+    <div class="scen-desc-num">Scenario 3</div>
+    <div class="scen-desc-txt">VM backups exclude DB data. NAS backups with NAS Cloud Direct to Object Storage.</div>
   </div>
 </div>
 
@@ -150,14 +186,39 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 </div>
 
 <div class="sec-lbl">Data reduction ratios &amp; daily change rates</div>
-<div class="tbl-card">
-  <table class="itbl" style="min-width:380px;width:auto">
-    <thead><tr><th style="text-align:left;min-width:180px">Workload type</th><th style="min-width:150px">Data reduction ratio</th><th style="min-width:150px">Daily change rate</th></tr></thead>
+<div class="tbl-card" style="display:flex;justify-content:center">
+  <table class="itbl" style="min-width:500px;width:auto">
+    <thead><tr>
+      <th style="text-align:left;min-width:180px">Workload type</th>
+      <th style="min-width:160px">First full backup data reduction ratio</th>
+      <th style="min-width:160px">Incremental change rate</th>
+      <th style="min-width:160px">Daily change rate</th>
+    </tr></thead>
     <tbody>
-      <tr><td><span class="wdot" style="background:#1D9E75"></span>VMs</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_vm" value="2.8" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_vm" value="2" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#EF9F27"></span>Oracle / SQL / UDB</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_db" value="3.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_db" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#378ADD"></span>NAS</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nas" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nas" value="0.1" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#7F77DD"></span>No-SQL</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nosql" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nosql" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr>
+        <td><span class="wdot" style="background:#1D9E75"></span>VMs</td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_vm" value="2.8" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dri_vm" value="2.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_vm" value="2" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td>
+      </tr>
+      <tr>
+        <td><span class="wdot" style="background:#EF9F27"></span>Oracle / SQL / UDB</td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_db" value="3.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dri_db" value="2.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_db" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td>
+      </tr>
+      <tr>
+        <td><span class="wdot" style="background:#378ADD"></span>NAS</td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nas" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dri_nas" value="1.1" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nas" value="0.1" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td>
+      </tr>
+      <tr>
+        <td><span class="wdot" style="background:#7F77DD"></span>No-SQL</td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nosql" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dri_nosql" value="1.1" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td>
+        <td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nosql" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td>
+      </tr>
     </tbody>
   </table>
 </div>
@@ -262,12 +323,15 @@ function getRaw(){return NAMES.map((_,ni)=>{const d={prod:IS_PROD[ni]};WL_KEYS.f
 
 function peerIdx(ni){for(const p of PAIRS){const a=NAMES.indexOf(p[0]),b=NAMES.indexOf(p[1]);if(a===ni)return b;if(b===ni)return a;}return -1;}
 
-function calcLocal(d,ni,DR,CR,ret){
+function calcLocal(d,ni,DR,DRI,CR,ret){
   const fb=(r,dr)=>r/dr;
-  // Incremental backup: source * change_rate / DR * days  (data reduction applied)
-  const inc=(r,dr,cr,dy)=>(r*cr/dr)*dy;
+  // Incremental backup: source * change_rate / DRI * incDays  (incremental DR applied, not full DR)
+  const inc=(r,dri,cr,dy)=>(r*cr/dri)*dy;
   // Transaction logs: source * change_rate * days  (same change rate, NO data reduction)
   const lg=(r,cr,dy)=>r*cr*dy;
+
+  // Incrementals = total retention days - 1 full backup day
+  const incDays=ret-1;
 
   const nasGB=(scen===3&&NCD_IDX.includes(ni))?0:d.NAS;
 
@@ -278,33 +342,34 @@ function calcLocal(d,ni,DR,CR,ret){
 
   let vmsCapGB;
   if(scen===1){
-    // Scenario 1: Full VM backup. Non-DB portion uses VM DR/CR.
-    // DB portion within VMs uses DB DR/CR for incrementals + transaction logs (no DR) at DB CR.
-    const vmNonDb = fb(vmNonDbGB,DR.VM)+inc(vmNonDbGB,DR.VM,CR.VM,ret);
-    const vmDb    = fb(vmDbGB,   DR.DB)+inc(vmDbGB,   DR.DB,CR.DB,ret)+lg(vmDbGB,CR.DB,ret);
+    // Scenario 1: Full VM backup.
+    // Non-DB: 1 full at VM full DR + incrementals at VM incremental DR
+    // DB within VMs: 1 full at DB full DR + incrementals at DB incremental DR + txn logs (no DR)
+    const vmNonDb = fb(vmNonDbGB,DR.VM)  + inc(vmNonDbGB,DRI.VM,CR.VM,incDays);
+    const vmDb    = fb(vmDbGB,   DR.DB)  + inc(vmDbGB,   DRI.DB,CR.DB,incDays) + lg(vmDbGB,CR.DB,ret);
     vmsCapGB = vmNonDb + vmDb;
   } else {
-    // Scenarios 2 & 3: DB VMDKs excluded from VM backup — only non-DB portion backed up via VMs
-    vmsCapGB = fb(vmNonDbGB,DR.VM)+inc(vmNonDbGB,DR.VM,CR.VM,ret);
+    // Scenarios 2 & 3: DB VMDKs excluded — only non-DB portion backed up via VMs
+    vmsCapGB = fb(vmNonDbGB,DR.VM) + inc(vmNonDbGB,DRI.VM,CR.VM,incDays);
   }
 
   return{
-    nas:    fb(nasGB,   DR.NAS)  +inc(nasGB,   DR.NAS,   CR.NAS,   ret),
+    nas:    fb(nasGB,   DR.NAS)  + inc(nasGB,   DRI.NAS,   CR.NAS,   incDays),
     vms:    vmsCapGB,
-    oracle: fb(d.Oracle,DR.DB)   +inc(d.Oracle, DR.DB,    CR.DB,    ret)+lg(d.Oracle,CR.DB,ret),
-    sql:    fb(d.SQL,   DR.DB)   +inc(d.SQL,    DR.DB,    CR.DB,    ret)+lg(d.SQL,   CR.DB,ret),
-    udb:    fb(d.UDB,   DR.DB)   +inc(d.UDB,    DR.DB,    CR.DB,    ret)+lg(d.UDB,   CR.DB,ret),
-    nosql:  fb(d.NoSQL, DR.NoSQL)+inc(d.NoSQL,  DR.NoSQL, CR.NoSQL, ret)+lg(d.NoSQL, CR.NoSQL,ret),
+    oracle: fb(d.Oracle,DR.DB)   + inc(d.Oracle, DRI.DB,    CR.DB,    incDays) + lg(d.Oracle,CR.DB,ret),
+    sql:    fb(d.SQL,   DR.DB)   + inc(d.SQL,    DRI.DB,    CR.DB,    incDays) + lg(d.SQL,   CR.DB,ret),
+    udb:    fb(d.UDB,   DR.DB)   + inc(d.UDB,    DRI.DB,    CR.DB,    incDays) + lg(d.UDB,   CR.DB,ret),
+    nosql:  fb(d.NoSQL, DR.NoSQL)+ inc(d.NoSQL,  DRI.NoSQL, CR.NoSQL, incDays) + lg(d.NoSQL, CR.NoSQL,ret),
   };
 }
 
 const RESERVE=0.02; // 2% reserve capacity for healthy headroom, code upgrades & maintenance
 
-function calcCluster(ni,repl,RAW,DR,CR,retProd,retNP){
-  const d=RAW[ni],ret=d.prod?retProd:retNP,l=calcLocal(d,ni,DR,CR,ret);
+function calcCluster(ni,repl,RAW,DR,DRI,CR,retProd,retNP){
+  const d=RAW[ni],ret=d.prod?retProd:retNP,l=calcLocal(d,ni,DR,DRI,CR,ret);
   const lt=l.nas+l.vms+l.oracle+l.sql+l.udb+l.nosql;
   let rt=0;
-  if(repl){const pi=peerIdx(ni);if(pi>=0){const pd=RAW[pi],pret=pd.prod?retProd:retNP,pl=calcLocal(pd,pi,DR,CR,pret);rt=pl.nas+pl.vms+pl.oracle+pl.sql+pl.udb+pl.nosql;}}
+  if(repl){const pi=peerIdx(ni);if(pi>=0){const pd=RAW[pi],pret=pd.prod?retProd:retNP,pl=calcLocal(pd,pi,DR,DRI,CR,pret);rt=pl.nas+pl.vms+pl.oracle+pl.sql+pl.udb+pl.nosql;}}
   const total=lt+rt;
   const reserve=total*RESERVE;
   return{...l,localGB:lt,replGB:rt,dataGB:total,reserveGB:reserve,totalGB:total+reserve};
@@ -322,7 +387,12 @@ const nCls=n=>n===0?'zero':n<=5?'some':'many';
 const ncdLCls=p=>p>=100?'nover':p>=85?'nwarn':'nok';
 const nodesN=(req,ex,nTB)=>req>ex?Math.ceil((req-ex)/nTB):0;
 
-function setScen(s){scen=s;['s1btn','s2btn','s3btn'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i+1===s));render();}
+function setScen(s){
+  scen=s;
+  ['s1btn','s2btn','s3btn'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i+1===s));
+  ['sd1','sd2','sd3'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i+1===s));
+  render();
+}
 
 function render(){
   const repl=document.getElementById('rTog').checked;
@@ -340,10 +410,11 @@ function render(){
   const retProd=getV('g_retprod',35),retNP=getV('g_retnp',14);
   const RAW=getRaw();
   const DR={VM:getV('dr_vm',2.8),DB:getV('dr_db',3.0),NAS:getV('dr_nas',1.3),NoSQL:getV('dr_nosql',1.3)};
+  const DRI={VM:getV('dri_vm',2.0),DB:getV('dri_db',2.0),NAS:getV('dri_nas',1.1),NoSQL:getV('dri_nosql',1.1)};
   const CR={VM:getV('cr_vm',2)/100,DB:getV('cr_db',5)/100,NAS:getV('cr_nas',0.1)/100,NoSQL:getV('cr_nosql',5)/100};
   const EXIST=NAMES.map((_,i)=>getV(`ex_${i}`,EXIST_DEF[i]));
   const yrs=[0,1,2,3,4];
-  const allR=NAMES.map((_,ni)=>calcCluster(ni,repl,RAW,DR,CR,retProd,retNP));
+  const allR=NAMES.map((_,ni)=>calcCluster(ni,repl,RAW,DR,DRI,CR,retProd,retNP));
   const grand=allR.reduce((s,r)=>s+r.totalGB*g,0);
   const prod=allR.reduce((s,r,i)=>s+(IS_PROD[i]?r.totalGB*g:0),0);
   const np=allR.reduce((s,r,i)=>s+(!IS_PROD[i]?r.totalGB*g:0),0);
@@ -396,12 +467,13 @@ function render(){
   if(scen===3){
     ncdSec.classList.add('show');
     const perCluster=NAMES.map((n,ni)=>`<strong>${n}:</strong> ${fTB(RAW[ni].NAS)} TB &rarr; ${fTB(RAW[ni].NAS*g)} TB`).join(' &nbsp;|&nbsp; ');
-    document.getElementById('ncdInfo').innerHTML=`${perCluster} &nbsp;|&nbsp; <strong>Combined NCD source Year ${yi+1}:</strong> ${fTB(allNasSrcGB*g)} TB &nbsp;|&nbsp; NCD license: ${fPct(ncdPct)} of ${12} PB &nbsp;|&nbsp; ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'} &nbsp;|&nbsp; Est. stored in object storage: <strong>${fTB(allNasSrcGB*g/DR.NAS)} TB</strong>`;
+    document.getElementById('ncdInfo').innerHTML=`${perCluster} &nbsp;|&nbsp; <strong>Combined NCD source Year ${yi+1}:</strong> ${fTB(allNasSrcGB*g)} TB &nbsp;|&nbsp; NCD license: ${fPct(ncdPct)} of ${12} PB &nbsp;|&nbsp; ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'} &nbsp;|&nbsp; Est. stored in object storage: <strong>${fTB((allNasSrcGB*g/DR.NAS)+(allNasSrcGB*g*CR.NAS/DRI.NAS)*(retProd-1))} TB</strong>`;
     const nc=document.getElementById('ncdCards');nc.innerHTML='';
     const totalNcdSrcGB=allNasSrcGB*g;
     // NCD object storage: 1 full backup (reduced) + incremental forever (daily changes, reduced)
     // Using production retention days for incremental stack depth
-    const totalNcdStoredGB=(totalNcdSrcGB/DR.NAS)+(totalNcdSrcGB*CR.NAS/DR.NAS)*retProd;
+    // NCD: 1 full backup (full DR) + incrementals (incremental DR) using prod retention
+    const totalNcdStoredGB=(totalNcdSrcGB/DR.NAS)+(totalNcdSrcGB*CR.NAS/DRI.NAS)*(retProd-1);
     const el=document.createElement('div');el.className='cl-card ncd-style';
     el.innerHTML=`
       <div class="cl-name">Combined NAS Cloud Direct &mdash; All Clusters &mdash; Object Storage (RCV)</div>
@@ -424,7 +496,7 @@ function render(){
   // Charts
   document.getElementById('gLeg').innerHTML=NAMES.map(n=>`<span><span class="ldot" style="background:${CC[n]}"></span>${n}</span>`).join('');
   if(gC)gC.destroy();
-  gC=new Chart(document.getElementById('gChart'),{type:'line',data:{labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],datasets:NAMES.map((n,ni)=>({label:n,data:yrs.map(y=>parseFloat(toTB(calcCluster(ni,repl,RAW,DR,CR,retProd,retNP).totalGB*Math.pow(1+gr,y)).toFixed(1))),borderColor:CC[n],backgroundColor:CC[n]+'22',borderWidth:2,pointRadius:4,tension:0.3,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'},title:{display:true,text:'TB',font:{size:11}}}}}});
+  gC=new Chart(document.getElementById('gChart'),{type:'line',data:{labels:['Year 1','Year 2','Year 3','Year 4','Year 5'],datasets:NAMES.map((n,ni)=>({label:n,data:yrs.map(y=>parseFloat(toTB(calcCluster(ni,repl,RAW,DR,DRI,CR,retProd,retNP).totalGB*Math.pow(1+gr,y)).toFixed(1))),borderColor:CC[n],backgroundColor:CC[n]+'22',borderWidth:2,pointRadius:4,tension:0.3,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} TB`}}},scales:{x:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},callback:v=>v.toLocaleString()+' TB'},title:{display:true,text:'TB',font:{size:11}}}}}});
 
   document.getElementById('wLeg').innerHTML=WL_LABELS.map((w,i)=>`<span><span class="ldot" style="background:${WL_COLORS[i]}"></span>${w}</span>`).join('');
   if(wC)wC.destroy();
@@ -502,17 +574,94 @@ function render(){
   document.getElementById('nodeHd').innerHTML=`<th>Cluster (existing TB)</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
   document.getElementById('nodeBdy').innerHTML=NAMES.map((n,ni)=>{
     const exTB=EXIST[ni];
-    return`<tr><td>${n} <span style="color:var(--text-secondary)">(${exTB.toLocaleString('en-US')} TB)</span></td>${yrs.map(y=>{const gy=Math.pow(1+gr,y),req=toTB(calcCluster(ni,repl,RAW,DR,CR,retProd,retNP).totalGB*gy),nd=nodesN(req,exTB,NODE_TB);return`<td class="${nCls(nd)}">${nd===0?'&mdash;':'+'+nd+' node'+(nd===1?'':'s')}</td>`;}).join('')}</tr>`;
+    return`<tr><td>${n} <span style="color:var(--text-secondary)">(${exTB.toLocaleString('en-US')} TB)</span></td>${yrs.map(y=>{const gy=Math.pow(1+gr,y),req=toTB(calcCluster(ni,repl,RAW,DR,DRI,CR,retProd,retNP).totalGB*gy),nd=nodesN(req,exTB,NODE_TB);return`<td class="${nCls(nd)}">${nd===0?'&mdash;':'+'+nd+' node'+(nd===1?'':'s')}</td>`;}).join('')}</tr>`;
   }).join('');
 }
 
+// ── Local storage helpers ────────────────────────────────
+const LS_KEY='rubrik_sizing_v1';
+
+function collectSettings(){
+  const s={};
+  const ids=['g_growth','g_retprod','g_retnp','g_node',
+    'dr_vm','dr_db','dr_nas','dr_nosql',
+    'dri_vm','dri_db','dri_nas','dri_nosql',
+    'cr_vm','cr_db','cr_nas','cr_nosql',
+    'ex_0','ex_1','ex_2','ex_3','ex_4','ex_5'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)s[id]=el.value;});
+  // Workload table
+  for(let ni=0;ni<6;ni++) for(let wi=0;wi<6;wi++){
+    const el=document.getElementById(`w_${ni}_${wi}`);
+    if(el) s[`w_${ni}_${wi}`]=el.value;
+  }
+  s.scen=scen;
+  s.repl=document.getElementById('rTog').checked;
+  s.yr=document.getElementById('yrSel').value;
+  return s;
+}
+
+function applySettings(s){
+  const ids=['g_growth','g_retprod','g_retnp','g_node',
+    'dr_vm','dr_db','dr_nas','dr_nosql',
+    'dri_vm','dri_db','dri_nas','dri_nosql',
+    'cr_vm','cr_db','cr_nas','cr_nosql',
+    'ex_0','ex_1','ex_2','ex_3','ex_4','ex_5'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el&&s[id]!==undefined)el.value=s[id];});
+  for(let ni=0;ni<6;ni++) for(let wi=0;wi<6;wi++){
+    const el=document.getElementById(`w_${ni}_${wi}`);
+    const key=`w_${ni}_${wi}`;
+    if(el&&s[key]!==undefined) el.value=s[key];
+  }
+  if(s.repl!==undefined) document.getElementById('rTog').checked=s.repl;
+  if(s.yr!==undefined) document.getElementById('yrSel').value=s.yr;
+  if(s.scen!==undefined){
+    scen=parseInt(s.scen);
+    ['s1btn','s2btn','s3btn'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',i+1===scen));
+    ['sd1','sd2','sd3'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i+1===scen));
+  }
+}
+
+function saveSettings(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(collectSettings()));
+    const st=document.getElementById('saveStatus');
+    st.textContent='Saved '+new Date().toLocaleTimeString();
+    setTimeout(()=>{st.textContent='';},3000);
+  } catch(e){ alert('Unable to save: '+e.message); }
+}
+
+function resetSettings(){
+  if(!confirm('Reset all inputs back to default values?')) return;
+  try{ localStorage.removeItem(LS_KEY); } catch(e){}
+  location.reload();
+}
+
+function loadSavedSettings(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      applySettings(JSON.parse(raw));
+      const st=document.getElementById('saveStatus');
+      st.textContent='Settings restored from last save';
+      setTimeout(()=>{st.textContent='';},3000);
+      return true;
+    }
+  } catch(e){ console.warn('Could not load saved settings',e); }
+  return false;
+}
+// ─────────────────────────────────────────────────────────
+
 buildWlTable();
-// Default state: Scenario 2, replication on, Year 5
-scen=2;
-document.getElementById('s1btn').classList.remove('on');
-document.getElementById('s2btn').classList.add('on');
-document.getElementById('rTog').checked=true;
-document.getElementById('yrSel').value='4';
+// Default state: Scenario 3, replication on, Year 3
+scen=3;
+const hasSaved=loadSavedSettings();
+if(!hasSaved){
+  document.getElementById('s1btn').classList.remove('on');
+  document.getElementById('s3btn').classList.add('on');
+  document.getElementById('sd3').classList.add('active');
+  document.getElementById('rTog').checked=true;
+  document.getElementById('yrSel').value='2';
+}
 render();
 </script>
 </body>
