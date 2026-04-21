@@ -10,10 +10,10 @@
 :root{--bg-primary:#ffffff;--bg-secondary:#f5f5f3;--bg-tertiary:#eeede9;--text-primary:#1a1a1a;--text-secondary:#6b6b68;--border-light:rgba(0,0,0,0.1);--border-med:rgba(0,0,0,0.18);--success-bg:#EAF3DE;--success-text:#3B6D11;--warn-bg:#FAEEDA;--warn-text:#854F0B;--danger-bg:#FCEBEB;--danger-text:#A32D2D;--info-bg:#E6F1FB;--info-text:#185FA5;--radius-md:8px;--radius-lg:12px}
 @media(prefers-color-scheme:dark){:root{--bg-primary:#1e1e1c;--bg-secondary:#272725;--bg-tertiary:#2f2f2d;--text-primary:#f0efea;--text-secondary:#9e9e98;--border-light:rgba(255,255,255,0.1);--border-med:rgba(255,255,255,0.18);--success-bg:#173404;--success-text:#C0DD97;--warn-bg:#412402;--warn-text:#FAC775;--danger-bg:#501313;--danger-text:#F7C1C1;--info-bg:#042C53;--info-text:#85B7EB}}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-tertiary);color:var(--text-primary);min-height:100vh}
-.header{background:var(--bg-primary);border-bottom:0.5px solid var(--border-light);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100}
+.header{background:var(--bg-primary);border-bottom:0.5px solid var(--border-light);padding:1.25rem 5vw;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100}
 .header-title{font-size:18px;font-weight:500}.header-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
 .rubrik-badge{font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;background:#00B4A2;color:white}
-.main{max-width:1300px;margin:0 auto;padding:1.5rem}
+.main{max-width:90vw;margin:0 auto;padding:1.5rem}
 .sec-lbl{font-size:10px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin:1.5rem 0 .6rem;padding-top:1.25rem;border-top:0.5px solid var(--border-light)}
 .sec-lbl.first{border-top:none;margin-top:0;padding-top:0}
 .ctrl-bar{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.85rem 1.25rem;display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:1.25rem}
@@ -26,7 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sl:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translateX(16px)}
 .dvdr{width:0.5px;height:28px;background:var(--border-light)}
-.global-inputs{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:1.25rem}
+.global-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
 .g-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.65rem .8rem}
 .g-card.ncd-inp{border-color:#0F6E56}.g-card.ncd-inp .g-lbl{color:#0F6E56}
 .g-lbl{font-size:10px;color:var(--text-secondary);margin-bottom:5px}
@@ -86,6 +86,19 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
 .out-tbl td.zero{color:var(--success-text)}.out-tbl td.some{color:var(--warn-text);font-weight:500}.out-tbl td.many{color:var(--danger-text);font-weight:500}
 .out-tbl td.nok{color:#0F6E56}.out-tbl td.nwarn{color:#854F0B;font-weight:500}.out-tbl td.nover{color:var(--danger-text);font-weight:500}
 .out-tbl tr.sp td{padding:3px;border:none}
+.lic-info-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+.lib-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:.75rem 1.1rem;display:flex;align-items:center;gap:12px}
+.lib-card.ent{border-left:3px solid #378ADD;border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+.lib-card.fnd{border-left:3px solid #1D9E75;border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+.lib-card.ncd{border-left:3px solid #0F6E56;border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+.lib-icon{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.lib-icon.ent{background:var(--info-bg);color:var(--info-text)}
+.lib-icon.fnd{background:var(--success-bg);color:var(--success-text)}
+.lib-icon.ncd{background:#E1F5EE;color:#085041}
+.lib-body{}
+.lib-lbl{font-size:10px;color:var(--text-secondary);margin-bottom:2px}
+.lib-val{font-size:16px;font-weight:500;color:var(--text-primary)}
+.lib-sub{font-size:10px;color:var(--text-secondary);margin-top:1px}
 .footer{text-align:center;font-size:11px;color:var(--text-secondary);padding:2rem;border-top:0.5px solid var(--border-light);margin-top:1rem}
 </style>
 </head>
@@ -120,16 +133,20 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
   </div>
 </div>
 
-<div class="sec-lbl first">Global settings</div>
+<div class="sec-lbl first">License capacities</div>
+<div class="lic-info-bar">
+  <div class="lib-card ent"><div class="lib-icon ent">ENT</div><div class="lib-body"><div class="lib-lbl">Enterprise Edition license</div><div class="lib-val">24 PB</div><div class="lib-sub">Covers local source data protection on all clusters</div></div></div>
+  <div class="lib-card fnd"><div class="lib-icon fnd">FND</div><div class="lib-body"><div class="lib-lbl">Foundation Edition license</div><div class="lib-val">37 PB</div><div class="lib-sub">Covers replicated copy storage across all cluster pairs</div></div></div>
+  <div class="lib-card ncd"><div class="lib-icon ncd">NCD</div><div class="lib-body"><div class="lib-lbl">NAS Cloud Direct license</div><div class="lib-val">12 PB</div><div class="lib-sub">Covers NAS source data written to Object Storage (RCV)</div></div></div>
+</div>
+
+<div class="sec-lbl">Global settings</div>
 <div class="global-inputs">
-  <div class="g-card"><div class="g-lbl">Annual growth rate</div><div class="g-inp-wrap"><input type="number" id="g_growth" value="15" min="0" max="100" step="1" oninput="render()"><span class="unit">%</span></div></div>
-  <div class="g-card"><div class="g-lbl">Enterprise license</div><div class="g-inp-wrap"><input type="number" id="g_ent" value="24" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
-  <div class="g-card"><div class="g-lbl">Foundation license</div><div class="g-inp-wrap"><input type="number" id="g_fnd" value="37" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
+  <div class="g-card"><div class="g-lbl">Annual growth rate</div><div class="g-inp-wrap"><input type="number" id="g_growth" value="10" min="0" max="100" step="1" oninput="render()"><span class="unit">%</span></div></div>
   <div class="g-card"><div class="g-lbl">Production retention</div><div class="g-inp-wrap"><input type="number" id="g_retprod" value="35" min="1" step="1" oninput="render()"><span class="unit">days</span></div></div>
   <div class="g-card"><div class="g-lbl">Non-prod retention</div><div class="g-inp-wrap"><input type="number" id="g_retnp" value="14" min="1" step="1" oninput="render()"><span class="unit">days</span></div></div>
   <div class="g-card"><div class="g-lbl">R760 node capacity</div><div class="g-inp-wrap"><input type="number" id="g_node" value="180" min="1" step="1" oninput="render()"><span class="unit">TB</span></div></div>
-  <div class="g-card ncd-inp"><div class="g-lbl">NAS Cloud Direct license</div><div class="g-inp-wrap"><input type="number" id="g_ncd_lic" value="12" min="0" step="1" oninput="render()"><span class="unit">PB</span></div></div>
-  <div class="g-card ncd-inp"><div class="g-lbl">NAS Cloud Direct data reduction</div><div class="g-inp-wrap"><input type="number" id="g_ncd_dr" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span class="unit">:1</span></div></div>
+
 </div>
 
 <div class="sec-lbl">Data reduction ratios &amp; daily change rates</div>
@@ -137,10 +154,10 @@ input:checked+.sl{background:#378ADD}input:checked+.sl:before{transform:translat
   <table class="itbl" style="min-width:380px;width:auto">
     <thead><tr><th style="text-align:left;min-width:180px">Workload type</th><th style="min-width:150px">Data reduction ratio</th><th style="min-width:150px">Daily change rate</th></tr></thead>
     <tbody>
-      <tr><td><span class="wdot" style="background:#1D9E75"></span>VMs</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_vm" value="2.8" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_vm" value="2" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#EF9F27"></span>Oracle / SQL / UDB</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_db" value="3.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_db" value="5" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#378ADD"></span>NAS (Scenarios 1 &amp; 2)</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nas" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nas" value="0.1" min="0.001" max="100" step="0.01" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
-      <tr><td><span class="wdot" style="background:#7F77DD"></span>No-SQL</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nosql" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nosql" value="5" min="0.01" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#1D9E75"></span>VMs</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_vm" value="2.8" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_vm" value="2" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#EF9F27"></span>Oracle / SQL / UDB</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_db" value="3.0" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_db" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#378ADD"></span>NAS</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nas" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nas" value="0.1" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
+      <tr><td><span class="wdot" style="background:#7F77DD"></span>No-SQL</td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="dr_nosql" value="1.3" min="1" max="20" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">:1</span></div></td><td><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><input type="number" id="cr_nosql" value="5" min="0.1" max="100" step="0.1" oninput="render()"><span style="font-size:11px;color:var(--text-secondary)">%</span></div></td></tr>
     </tbody>
   </table>
 </div>
@@ -251,11 +268,29 @@ function calcLocal(d,ni,DR,CR,ret){
   const inc=(r,dr,cr,dy)=>(r*cr/dr)*dy;
   // Transaction logs: source * change_rate * days  (same change rate, NO data reduction)
   const lg=(r,cr,dy)=>r*cr*dy;
-  const vmGB=(scen===1)?d.VMs:Math.max(0,d.VMs-d.SQL-d.UDB-d.NoSQL);
+
   const nasGB=(scen===3&&NCD_IDX.includes(ni))?0:d.NAS;
+
+  // DB data embedded within VMs (SQL + UDB + NoSQL)
+  const vmDbGB=d.SQL+d.UDB+d.NoSQL;
+  // Non-DB portion of VMs
+  const vmNonDbGB=Math.max(0,d.VMs-vmDbGB);
+
+  let vmsCapGB;
+  if(scen===1){
+    // Scenario 1: Full VM backup. Non-DB portion uses VM DR/CR.
+    // DB portion within VMs uses DB DR/CR for incrementals + transaction logs (no DR) at DB CR.
+    const vmNonDb = fb(vmNonDbGB,DR.VM)+inc(vmNonDbGB,DR.VM,CR.VM,ret);
+    const vmDb    = fb(vmDbGB,   DR.DB)+inc(vmDbGB,   DR.DB,CR.DB,ret)+lg(vmDbGB,CR.DB,ret);
+    vmsCapGB = vmNonDb + vmDb;
+  } else {
+    // Scenarios 2 & 3: DB VMDKs excluded from VM backup — only non-DB portion backed up via VMs
+    vmsCapGB = fb(vmNonDbGB,DR.VM)+inc(vmNonDbGB,DR.VM,CR.VM,ret);
+  }
+
   return{
     nas:    fb(nasGB,   DR.NAS)  +inc(nasGB,   DR.NAS,   CR.NAS,   ret),
-    vms:    fb(vmGB,    DR.VM)   +inc(vmGB,     DR.VM,    CR.VM,    ret),
+    vms:    vmsCapGB,
     oracle: fb(d.Oracle,DR.DB)   +inc(d.Oracle, DR.DB,    CR.DB,    ret)+lg(d.Oracle,CR.DB,ret),
     sql:    fb(d.SQL,   DR.DB)   +inc(d.SQL,    DR.DB,    CR.DB,    ret)+lg(d.SQL,   CR.DB,ret),
     udb:    fb(d.UDB,   DR.DB)   +inc(d.UDB,    DR.DB,    CR.DB,    ret)+lg(d.UDB,   CR.DB,ret),
@@ -281,7 +316,7 @@ const fGB=gb=>Math.round(gb).toLocaleString('en-US');
 const fPct=p=>p.toFixed(1)+'%';
 const bClr=p=>p>=100?'#E24B4A':p>=85?'#EF9F27':'#1D9E75';
 const sCls=p=>p>=100?'s-over':p>=85?'s-warn':'s-ok';
-const sTxt=(p,g)=>p>=100?`Overage: ${Math.abs(g).toLocaleString('en-US',{maximumFractionDigits:0})} TB`:`${g.toLocaleString('en-US',{maximumFractionDigits:0})} TB remaining`;
+const sTxt=(p,g)=>p>=100?`Overage: ${(Math.abs(g)/1024).toFixed(1)} PB`:`${(g/1024).toFixed(1)} PB remaining`;
 const lCls=p=>p>=100?'over':p>=85?'warn':'ok';
 const nCls=n=>n===0?'zero':n<=5?'some':'many';
 const ncdLCls=p=>p>=100?'nover':p>=85?'nwarn':'nok';
@@ -300,8 +335,8 @@ function render(){
   const g=Math.pow(1+gr,yi);
   document.getElementById('growthLbl').textContent=getV('g_growth',15);
 
-  const ENT=getV('g_ent',24)*1024,FND=getV('g_fnd',37)*1024,NCD=getV('g_ncd_lic',12)*1024;
-  const DR_NCD=getV('g_ncd_dr',1.3),NODE_TB=getV('g_node',180);
+  const ENT=24*1024,FND=37*1024,NCD=12*1024;
+  const NODE_TB=getV('g_node',180);
   const retProd=getV('g_retprod',35),retNP=getV('g_retnp',14);
   const RAW=getRaw();
   const DR={VM:getV('dr_vm',2.8),DB:getV('dr_db',3.0),NAS:getV('dr_nas',1.3),NoSQL:getV('dr_nosql',1.3)};
@@ -317,10 +352,10 @@ function render(){
   const gdStr=yi===0?'Baseline':`+${((g-1)*100).toFixed(1)}% vs Yr 1`;
 
   document.getElementById('sumBar').innerHTML=`
-    <div class="sum-card"><div class="sum-lbl">Total all clusters</div><div class="sum-val">${fTB(grand)} TB</div><div class="sum-sub">${fGB(grand)} GB</div></div>
-    <div class="sum-card"><div class="sum-lbl">Production clusters</div><div class="sum-val">${fTB(prod)} TB</div><div class="sum-sub">${fGB(prod)} GB</div></div>
-    <div class="sum-card"><div class="sum-lbl">Non-production clusters</div><div class="sum-val">${fTB(np)} TB</div><div class="sum-sub">${fGB(np)} GB</div></div>
-    <div class="sum-card"><div class="sum-lbl">Replication overhead</div><div class="sum-val">${repl?fTB(replGB)+' TB':'—'}</div><div class="sum-sub">${repl?fGB(replGB)+' GB':'Off'}</div></div>
+    <div class="sum-card"><div class="sum-lbl">Total all clusters</div><div class="sum-val">${fTB(grand)} TB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Production clusters</div><div class="sum-val">${fTB(prod)} TB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Non-production clusters</div><div class="sum-val">${fTB(np)} TB</div></div>
+    <div class="sum-card"><div class="sum-lbl">Replication overhead</div><div class="sum-val">${repl?fTB(replGB)+' TB':'—'}</div></div>
     <div class="sum-card"><div class="sum-lbl">Year shown</div><div class="sum-val">Year ${yi+1}</div><div class="sum-sub">${gdStr}</div></div>
   `;
 
@@ -334,9 +369,9 @@ function render(){
       <div class="cl-name">${n}</div>
       <div class="cl-meta">${d.prod?'Production':'Non-production'} &middot; ${d.prod?retProd:retNP}-day retention${isNcd?' &middot; NAS &rarr; NCD':''}</div>
       <div class="cl-tot">${fTB(r.totalGB*g)} TB</div>
-      <div class="cl-unit">${fGB(r.totalGB*g)} GB total required</div>
+
       <div class="bkdn">
-        ${isNcd?`<div class="brow ncd"><span>NAS &rarr; NAS Cloud Direct</span><span class="v">${fTB(d.NAS*g)} TB src</span></div>`:`<div class="brow"><span>NAS</span><span class="v">${fTB(r.nas*g)} TB</span></div>`}
+        ${isNcd?`<div class="brow ncd"><span>NAS &rarr; NAS Cloud Direct</span><span class="v">${fTB(d.NAS*g)} TB</span></div>`:`<div class="brow"><span>NAS</span><span class="v">${fTB(r.nas*g)} TB</span></div>`}
         <div class="brow"><span>${vmLbl}</span><span class="v">${fTB(r.vms*g)} TB</span></div>
         <div class="brow"><span>Oracle</span><span class="v">${fTB(r.oracle*g)} TB</span></div>
         ${d.SQL>0?`<div class="brow"><span>SQL</span><span class="v">${fTB(r.sql*g)} TB</span></div>`:''}
@@ -361,10 +396,12 @@ function render(){
   if(scen===3){
     ncdSec.classList.add('show');
     const perCluster=NAMES.map((n,ni)=>`<strong>${n}:</strong> ${fTB(RAW[ni].NAS)} TB &rarr; ${fTB(RAW[ni].NAS*g)} TB`).join(' &nbsp;|&nbsp; ');
-    document.getElementById('ncdInfo').innerHTML=`${perCluster} &nbsp;|&nbsp; <strong>Combined NCD source Year ${yi+1}:</strong> ${fTB(allNasSrcGB*g)} TB &nbsp;|&nbsp; NCD license: ${fPct(ncdPct)} of ${getV('g_ncd_lic',12)} PB &nbsp;|&nbsp; ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'} &nbsp;|&nbsp; Est. stored in object storage: <strong>${fTB(allNasSrcGB*g/DR_NCD)} TB</strong>`;
+    document.getElementById('ncdInfo').innerHTML=`${perCluster} &nbsp;|&nbsp; <strong>Combined NCD source Year ${yi+1}:</strong> ${fTB(allNasSrcGB*g)} TB &nbsp;|&nbsp; NCD license: ${fPct(ncdPct)} of ${12} PB &nbsp;|&nbsp; ${ncdGap>=0?fTB(ncdGap)+' TB remaining':fTB(Math.abs(ncdGap))+' TB overage'} &nbsp;|&nbsp; Est. stored in object storage: <strong>${fTB(allNasSrcGB*g/DR.NAS)} TB</strong>`;
     const nc=document.getElementById('ncdCards');nc.innerHTML='';
     const totalNcdSrcGB=allNasSrcGB*g;
-    const totalNcdStoredGB=totalNcdSrcGB/DR_NCD;
+    // NCD object storage: 1 full backup (reduced) + incremental forever (daily changes, reduced)
+    // Using production retention days for incremental stack depth
+    const totalNcdStoredGB=(totalNcdSrcGB/DR.NAS)+(totalNcdSrcGB*CR.NAS/DR.NAS)*retProd;
     const el=document.createElement('div');el.className='cl-card ncd-style';
     el.innerHTML=`
       <div class="cl-name">Combined NAS Cloud Direct &mdash; All Clusters &mdash; Object Storage (RCV)</div>
@@ -374,7 +411,8 @@ function render(){
       <div class="bkdn">
         ${NAMES.map((n,ni)=>`<div class="brow"><span>${n} NAS (Year 1)</span><span class="v">${fTB(RAW[ni].NAS)} TB</span></div>`).join('')}
         <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Combined source Year ${yi+1}</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
-        <div class="brow"><span>NCD data reduction</span><span class="v">${DR_NCD}:1</span></div>
+        <div class="brow"><span>Data reduction (NAS)</span><span class="v">${DR.NAS}:1</span></div>
+        <div class="brow"><span>Daily change rate (NAS)</span><span class="v">${(CR.NAS*100).toFixed(1)}%</span></div>
         <div class="brow" style="margin-top:5px;padding-top:5px;border-top:0.5px solid var(--border-light)"><span>Total stored in object storage</span><span class="v">${fTB(totalNcdStoredGB)} TB</span></div>
         <div class="brow" style="color:#0F6E56"><span>NCD license consumed (source size)</span><span class="v">${fTB(totalNcdSrcGB)} TB</span></div>
       </div>
@@ -401,36 +439,37 @@ function render(){
   const eG=ENT-entU,fG=FND-fndU,nG=NCD-ncdUsed;
 
   function licCard(title,sub,licTB,licPB,usedTB,pct,gap,extraClass=''){
-    return`<div class="lic-card ${extraClass}"><div class="lic-title"${extraClass?` style="color:#085041"`:''}>${title}</div><div class="lic-sub">${sub}</div><div class="lrow"><span class="ll">Licensed</span><span class="lv">${licTB.toLocaleString('en-US')} TB (${licPB} PB)</span></div><div class="lrow"><span class="ll">Required — Year ${yi+1}</span><span class="lv">${usedTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,pct).toFixed(1)}%;background:${bClr(pct)}"></div></div><div class="lrow"><span class="ll">Utilization</span><span class="lv" style="color:${bClr(pct)}">${fPct(pct)}</span></div><div class="lrow"><span class="ll">${gap>=0?'Remaining':'Overage'}</span><span class="lv" style="color:${bClr(pct)}">${gap>=0?'+':''}${Math.abs(gap).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div><span class="spill ${sCls(pct)}">${sTxt(pct,gap)}</span></div>`;
+    return`<div class="lic-card ${extraClass}"><div class="lic-title"${extraClass?` style="color:#085041"`:''}>${title}</div><div class="lic-sub">${sub}</div><div class="lrow"><span class="ll">Licensed</span><span class="lv">${licPB} PB</span></div><div class="lrow"><span class="ll">Required — Year ${yi+1}</span><span class="lv">${(usedTB/1024).toFixed(1)} PB</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,pct).toFixed(1)}%;background:${bClr(pct)}"></div></div><div class="lrow"><span class="ll">Utilization</span><span class="lv" style="color:${bClr(pct)}">${fPct(pct)}</span></div><div class="lrow"><span class="ll">${gap>=0?'Remaining':'Overage'}</span><span class="lv" style="color:${bClr(pct)}">${gap>=0?'+':''}${(Math.abs(gap)/1024).toFixed(1)} PB</span></div><span class="spill ${sCls(pct)}">${sTxt(pct,gap)}</span></div>`;
   }
 
   const lw=document.getElementById('licCardsWrap');
-  const entHtml=licCard('Enterprise edition',`Local source data${scen===3?' — NAS removed from all clusters':' — all clusters'}`,ENT,getV('g_ent',24),entU,eP,eG);
-  const fndHtml=licCard('Foundation edition',`Replicated copy storage${repl?'':' — replication off'}`,FND,getV('g_fnd',37),fndU,fP,fG);
-  const ncdHtml=licCard('NAS Cloud Direct','All clusters NAS &rarr; Object Storage (RCV). Licensed by source data size.',NCD,getV('g_ncd_lic',12),ncdUsed,nP,nG,'ncd-bdr');
+  const entHtml=licCard('Enterprise edition',`Local source data${scen===3?' — NAS removed from all clusters':' — all clusters'}`,ENT,24,entU,eP,eG);
+  const fndHtml=licCard('Foundation edition',`Replicated copy storage${repl?'':' — replication off'}`,FND,37,fndU,fP,fG);
+  const ncdHtml=licCard('NAS Cloud Direct','All clusters NAS &rarr; Object Storage (RCV). Licensed by source data size.',NCD,12,ncdUsed,nP,nG,'ncd-bdr');
   lw.innerHTML=scen===3?`<div class="three-col">${entHtml}${fndHtml}${ncdHtml}</div>`:`<div class="two-col">${entHtml}${fndHtml}</div>`;
 
   document.getElementById('licHd').innerHTML=`<th>License metric</th>${yrs.map(y=>`<th>Year ${y+1}</th>`).join('')}`;
   const licYr=yrs.map(y=>{
     const gy=Math.pow(1+gr,y); // Year1=1.0, Year2=(1+gr)^1, ...
     const loc=allR.reduce((s,r)=>s+r.localGB*gy,0),rep=repl?allR.reduce((s,r)=>s+r.replGB*gy,0):0;
-    const eu=toTB(loc),fu=toTB(rep),nu=toTB(NAMES.reduce((s,_,ni)=>s+RAW[ni].NAS,0)*gy);
+    const ncdSrcY=NAMES.reduce((s,_,ni)=>s+RAW[ni].NAS,0)*gy;
+    const eu=toTB(loc),fu=toTB(rep),nu=toTB(ncdSrcY);
     return{eu,fu,nu,ep:(eu/ENT)*100,fp:(fu/FND)*100,np:(nu/NCD)*100,eg:ENT-eu,fg:FND-fu,ng:NCD-nu};
   });
   let rows=`
-    <tr><td style="font-weight:500;color:var(--text-primary)">Enterprise — used (TB)</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${r.eu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td style="font-weight:500;color:var(--text-primary)">Enterprise — used (PB)</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${(r.eu/1024).toFixed(2)}</td>`).join('')}</tr>
     <tr><td>Enterprise — utilization</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${fPct(r.ep)}</td>`).join('')}</tr>
-    <tr><td>Enterprise — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${r.eg>=0?'+':''}${Math.abs(r.eg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+    <tr><td>Enterprise — remaining / (overage) PB</td>${licYr.map(r=>`<td class="${lCls(r.ep)}">${r.eg>=0?'+':''}${Math.abs(r.eg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
     <tr class="sp"><td colspan="6"></td></tr>
-    <tr><td style="font-weight:500;color:var(--text-primary)">Foundation — used (TB)</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${r.fu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
+    <tr><td style="font-weight:500;color:var(--text-primary)">Foundation — used (PB)</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${(r.fu/1024).toFixed(2)}</td>`).join('')}</tr>
     <tr><td>Foundation — utilization</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${fPct(r.fp)}</td>`).join('')}</tr>
-    <tr><td>Foundation — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${r.fg>=0?'+':''}${Math.abs(r.fg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+    <tr><td>Foundation — remaining / (overage) PB</td>${licYr.map(r=>`<td class="${lCls(r.fp)}">${r.fg>=0?'+':''}${Math.abs(r.fg).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
   `;
   if(scen===3) rows+=`
     <tr class="sp"><td colspan="6"></td></tr>
-    <tr><td style="font-weight:500;color:#085041">NAS Cloud Direct — source data (TB)</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${r.nu.toLocaleString('en-US',{maximumFractionDigits:1})}</td>`).join('')}</tr>
-    <tr><td style="color:#0F6E56">NAS Cloud Direct — utilization of ${getV('g_ncd_lic',12)} PB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${fPct(r.np)}</td>`).join('')}</tr>
-    <tr><td style="color:#0F6E56">NAS Cloud Direct — remaining / (overage) TB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${r.ng>=0?'+':''}${Math.abs(r.ng).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
+    <tr><td style="font-weight:500;color:#085041">NAS Cloud Direct — source data (PB)</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${(r.nu/1024).toFixed(2)}</td>`).join('')}</tr>
+    <tr><td style="color:#0F6E56">NAS Cloud Direct — utilization of 12 PB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${fPct(r.np)}</td>`).join('')}</tr>
+    <tr><td style="color:#0F6E56">NAS Cloud Direct — remaining / (overage) PB</td>${licYr.map(r=>`<td class="${ncdLCls(r.np)}">${r.ng>=0?'+':''}${Math.abs(r.ng).toLocaleString('en-US',{maximumFractionDigits:0})}</td>`).join('')}</tr>
   `;
   document.getElementById('licBdy').innerHTML=rows;
 
@@ -449,7 +488,7 @@ function render(){
       <div class="cl-meta">Existing capacity: ${exTB.toLocaleString('en-US')} TB</div>
       <div class="lrow"><span class="ll">Data + replication</span><span class="lv">${dataTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
       <div class="lrow" style="color:var(--warn-text)"><span class="ll">+ 2% reserve capacity</span><span class="lv">${reserveTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
-      <div class="lrow" style="font-weight:500"><span class="ll">Total required — Year ${yi+1}</span><span class="lv">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
+      <div class="lrow" style="font-weight:500"><span class="ll">Total for Year ${yi+1}</span><span class="lv">${reqTB.toLocaleString('en-US',{maximumFractionDigits:1})} TB</span></div>
       <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,up).toFixed(1)}%;background:${clr}"></div></div>
       <div class="lrow"><span class="ll">Utilization of existing</span><span class="lv" style="color:${clr}">${fPct(up)}</span></div>
       <div class="lrow"><span class="ll">${reqTB>exTB?'Gap':'Headroom'}</span><span class="lv" style="color:${clr}">${Math.abs(exTB-reqTB).toLocaleString('en-US',{maximumFractionDigits:0})} TB</span></div>
